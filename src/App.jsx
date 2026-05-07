@@ -18,6 +18,7 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState("")
   const [showOrders, setShowOrders] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -164,6 +165,12 @@ function App() {
         "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=800",
     },
   ]
+
+  const filteredProducts = products.filter((item) =>
+    item.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  )
 
   const validateForm = () => {
     if (name.trim().length < 3) {
@@ -770,6 +777,36 @@ function App() {
 
             <div
               style={{
+                width: "100%",
+                maxWidth: "900px",
+                margin: "0 auto 24px auto",
+                paddingInline: "20px",
+                boxSizing: "border-box",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) =>
+                  setSearchQuery(e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: "12px",
+                  border: "1px solid #4a3325",
+                  backgroundColor: "#2c1d14",
+                  color: "white",
+                  fontSize: "16px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
                 display: "flex",
                 justifyContent: "center",
                 gap: "25px",
@@ -777,7 +814,7 @@ function App() {
                 paddingInline: "20px",
               }}
             >
-              {products.map((item, index) => (
+              {filteredProducts.map((item, index) => (
                 <div
                   key={index}
                   style={{
