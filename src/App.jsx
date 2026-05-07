@@ -513,125 +513,6 @@ function App() {
                   <h2>₹{order.total}</h2>
                 </div>
 
-                <div
-                  style={{
-                    marginTop: "18px",
-                    backgroundColor: "#23170f",
-                    border: "1px solid #4a3325",
-                    borderRadius: "14px",
-                    padding: "16px 14px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    {trackingSteps.map(
-                      (step, stepIndex) => {
-                        const currentStepIndex =
-                          getTrackingStepIndex(
-                            order.status
-                          )
-                        const isCompleted =
-                          stepIndex <= currentStepIndex
-                        const isActive =
-                          stepIndex === currentStepIndex
-
-                        return (
-                          <div
-                            key={step}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              flex: 1,
-                              minWidth: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                gap: "8px",
-                                minWidth: 0,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: "30px",
-                                  height: "30px",
-                                  borderRadius: "50%",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent:
-                                    "center",
-                                  fontSize: "14px",
-                                  fontWeight: "bold",
-                                  color: isCompleted
-                                    ? "#1a120b"
-                                    : "#d2b48c",
-                                  border: `2px solid ${
-                                    isCompleted
-                                      ? "#f0b56e"
-                                      : "#6a4a36"
-                                  }`,
-                                  background: isCompleted
-                                    ? "linear-gradient(135deg, #f0b56e, #c68b59)"
-                                    : "transparent",
-                                  boxShadow: isActive
-                                    ? "0 0 0 3px rgba(240, 181, 110, 0.2)"
-                                    : "none",
-                                }}
-                              >
-                                {stepIndex + 1}
-                              </div>
-
-                              <p
-                                style={{
-                                  margin: 0,
-                                  textAlign: "center",
-                                  fontSize: "12px",
-                                  lineHeight: "1.35",
-                                  color: isCompleted
-                                    ? "#f5d6b3"
-                                    : "#9d7d67",
-                                  fontWeight: isActive
-                                    ? "bold"
-                                    : "normal",
-                                  maxWidth: "120px",
-                                }}
-                              >
-                                {step}
-                              </p>
-                            </div>
-
-                            {stepIndex <
-                              trackingSteps.length -
-                                1 && (
-                              <div
-                                style={{
-                                  flex: 1,
-                                  height: "4px",
-                                  borderRadius: "999px",
-                                  margin: "0 8px",
-                                  marginTop: "13px",
-                                  backgroundColor:
-                                    stepIndex <
-                                    currentStepIndex
-                                      ? "#d89b63"
-                                      : "#5a3d2c",
-                                }}
-                              />
-                            )}
-                          </div>
-                        )
-                      }
-                    )}
-                  </div>
-                </div>
-
                 {selectedOrder?.id === order.id && (
                   <div
                     style={{
@@ -681,10 +562,156 @@ function App() {
                         {order.payment}
                       </p>
 
-                      <p>
-                        <strong>Status:</strong>{" "}
-                        {order.status}
-                      </p>
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          backgroundColor: "#23170f",
+                          border:
+                            "1px solid #4a3325",
+                          borderRadius: "14px",
+                          padding: "16px 14px",
+                        }}
+                      >
+                        <p
+                          style={{
+                            marginTop: 0,
+                            marginBottom: "14px",
+                          }}
+                        >
+                          <strong>Status:</strong>{" "}
+                          {order.status}
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          {trackingSteps.map(
+                            (step, stepIndex) => {
+                              const currentStepIndex =
+                                getTrackingStepIndex(
+                                  order.status
+                                )
+                              const isCompleted =
+                                stepIndex <=
+                                currentStepIndex
+                              const isActive =
+                                stepIndex ===
+                                currentStepIndex
+
+                              return (
+                                <div
+                                  key={step}
+                                  style={{
+                                    display: "flex",
+                                    alignItems:
+                                      "center",
+                                    flex: 1,
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection:
+                                        "column",
+                                      alignItems:
+                                        "center",
+                                      gap: "8px",
+                                      minWidth: 0,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius:
+                                          "50%",
+                                        display: "flex",
+                                        alignItems:
+                                          "center",
+                                        justifyContent:
+                                          "center",
+                                        fontSize:
+                                          "14px",
+                                        fontWeight:
+                                          "bold",
+                                        color:
+                                          isCompleted
+                                            ? "#1a120b"
+                                            : "#d2b48c",
+                                        border: `2px solid ${
+                                          isCompleted
+                                            ? "#f0b56e"
+                                            : "#6a4a36"
+                                        }`,
+                                        background:
+                                          isCompleted
+                                            ? "linear-gradient(135deg, #f0b56e, #c68b59)"
+                                            : "transparent",
+                                        boxShadow:
+                                          isActive
+                                            ? "0 0 0 3px rgba(240, 181, 110, 0.2)"
+                                            : "none",
+                                      }}
+                                    >
+                                      {stepIndex + 1}
+                                    </div>
+
+                                    <p
+                                      style={{
+                                        margin: 0,
+                                        textAlign:
+                                          "center",
+                                        fontSize:
+                                          "12px",
+                                        lineHeight:
+                                          "1.35",
+                                        color:
+                                          isCompleted
+                                            ? "#f5d6b3"
+                                            : "#9d7d67",
+                                        fontWeight:
+                                          isActive
+                                            ? "bold"
+                                            : "normal",
+                                        maxWidth:
+                                          "120px",
+                                      }}
+                                    >
+                                      {step}
+                                    </p>
+                                  </div>
+
+                                  {stepIndex <
+                                    trackingSteps.length -
+                                      1 && (
+                                    <div
+                                      style={{
+                                        flex: 1,
+                                        height: "4px",
+                                        borderRadius:
+                                          "999px",
+                                        margin:
+                                          "0 8px",
+                                        marginTop:
+                                          "13px",
+                                        backgroundColor:
+                                          stepIndex <
+                                          currentStepIndex
+                                            ? "#d89b63"
+                                            : "#5a3d2c",
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              )
+                            }
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
