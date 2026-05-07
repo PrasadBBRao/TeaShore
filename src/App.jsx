@@ -21,6 +21,8 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] =
     useState("All")
+  const [lastAddedProduct, setLastAddedProduct] =
+    useState(null)
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -108,6 +110,8 @@ function App() {
       autoClose: 2000,
       theme: "dark",
     })
+
+    setLastAddedProduct(item.name)
   }
 
   const increaseQuantity = (name) => {
@@ -181,6 +185,29 @@ function App() {
 
     return matchesSearch && matchesCategory
   })
+
+  const getRecommendationsForProduct = (
+    productName
+  ) => {
+    if (
+      productName === "Masala Tea ☕" ||
+      productName === "Cold Coffee 🧋"
+    ) {
+      return products.filter(
+        (item) => item.name === "French Fries 🍟"
+      )
+    }
+
+    if (productName === "French Fries 🍟") {
+      return products.filter(
+        (item) =>
+          item.name === "Masala Tea ☕" ||
+          item.name === "Cold Coffee 🧋"
+      )
+    }
+
+    return []
+  }
 
   const validateForm = () => {
     if (name.trim().length < 3) {
@@ -911,6 +938,105 @@ function App() {
                   >
                     Add to Cart
                   </button>
+
+                  {lastAddedProduct === item.name &&
+                    getRecommendationsForProduct(
+                      item.name
+                    ).length > 0 && (
+                      <div
+                        style={{
+                          marginTop: "16px",
+                          paddingTop: "14px",
+                          borderTop:
+                            "1px solid #4a3325",
+                        }}
+                      >
+                        <p
+                          style={{
+                            margin: "0 0 12px 0",
+                            color: "#f5d6b3",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Recommended For You 🤖
+                        </p>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            flexWrap: "wrap",
+                            justifyContent:
+                              "center",
+                          }}
+                        >
+                          {getRecommendationsForProduct(
+                            item.name
+                          ).map((recommendedItem) => (
+                            <div
+                              key={`inline-recommended-${item.name}-${recommendedItem.name}`}
+                              style={{
+                                backgroundColor:
+                                  "#24160f",
+                                border:
+                                  "1px solid #4a3325",
+                                borderRadius:
+                                  "12px",
+                                padding: "10px",
+                                width: "100%",
+                                maxWidth: "220px",
+                              }}
+                            >
+                              <p
+                                style={{
+                                  margin: 0,
+                                  color: "#d2b48c",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                AI Pick
+                              </p>
+
+                              <p
+                                style={{
+                                  margin:
+                                    "6px 0 4px 0",
+                                  fontWeight:
+                                    "bold",
+                                }}
+                              >
+                                {
+                                  recommendedItem.name
+                                }
+                              </p>
+
+                              <p
+                                style={{
+                                  margin: 0,
+                                  color: "#d2b48c",
+                                }}
+                              >
+                                ₹
+                                {
+                                  recommendedItem.price
+                                }
+                              </p>
+
+                              <button
+                                onClick={() =>
+                                  addToCart(
+                                    recommendedItem
+                                  )
+                                }
+                                style={mainButton}
+                              >
+                                Add to Cart
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
