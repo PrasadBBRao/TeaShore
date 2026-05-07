@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react"
+import { ToastContainer, toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -76,7 +78,7 @@ function App() {
     const existingItem = cartItems.find(
       (cartItem) => cartItem.name === item.name
     )
-
+  
     if (existingItem) {
       setCartItems(
         cartItems.map((cartItem) =>
@@ -97,6 +99,12 @@ function App() {
         },
       ])
     }
+  
+    toast.success(`${item.name} added to cart ☕`, {
+      position: "top-right",
+      autoClose: 2000,
+      theme: "dark",
+    })
   }
 
   const increaseQuantity = (name) => {
@@ -1055,6 +1063,7 @@ function App() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   )
 }
