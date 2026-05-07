@@ -542,14 +542,37 @@ function App() {
           </h1>
 
           {orders.length === 0 ? (
-            <p
+            <div
               style={{
+                width: "100%",
+                maxWidth: "620px",
+                margin: "0 auto",
+                backgroundColor: "#2c1d14",
+                border: "1px solid #4a3325",
+                borderRadius: "18px",
+                padding: "34px 24px",
                 textAlign: "center",
-                color: "#d2b48c",
+                boxSizing: "border-box",
               }}
             >
-              No Orders Yet
-            </p>
+              <h2
+                style={{
+                  margin: 0,
+                }}
+              >
+                📦 No Orders Yet
+              </h2>
+              <p
+                style={{
+                  marginTop: "12px",
+                  marginBottom: 0,
+                  color: "#d2b48c",
+                  fontSize: "18px",
+                }}
+              >
+                ☕ Your orders will appear here
+              </p>
+            </div>
           ) : (
             orders.map((order, index) => (
               <div
@@ -1078,7 +1101,7 @@ function App() {
             </div>
 
             {/* CART */}
-            {cartItems.length > 0 && (
+            {cartItems.length > 0 ? (
               <div
                 style={{
                   width: "90%",
@@ -1164,6 +1187,49 @@ function App() {
                   style={mainButton}
                 >
                   Proceed to Checkout →
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: "90%",
+                  maxWidth: "700px",
+                  margin: "50px auto",
+                  backgroundColor: "#2c1d14",
+                  border: "1px solid #4a3325",
+                  borderRadius: "18px",
+                  padding: "36px 24px",
+                  textAlign: "center",
+                  boxSizing: "border-box",
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                  }}
+                >
+                  🛒 Your Cart is Empty
+                </h2>
+                <p
+                  style={{
+                    marginTop: "12px",
+                    color: "#d2b48c",
+                    fontSize: "18px",
+                  }}
+                >
+                  ☕ Add delicious items from the menu
+                </p>
+                <button
+                  onClick={() =>
+                    scrollToSection(menuRef)
+                  }
+                  style={{
+                    ...mainButton,
+                    maxWidth: "240px",
+                    marginInline: "auto",
+                  }}
+                >
+                  Explore Menu
                 </button>
               </div>
             )}
