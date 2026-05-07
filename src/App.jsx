@@ -18,6 +18,9 @@ function App() {
   const [paymentMethod, setPaymentMethod] = useState("")
   const [showOrders, setShowOrders] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] =
+    useState("All")
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -147,23 +150,39 @@ function App() {
   const products = [
     {
       name: "Masala Tea ☕",
+      category: "Tea",
       price: 40,
       image:
         "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&w=800",
     },
     {
       name: "Cold Coffee 🧋",
+      category: "Drinks",
       price: 90,
       image:
         "https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=800",
     },
     {
       name: "French Fries 🍟",
+      category: "Snacks",
       price: 120,
       image:
         "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=800",
     },
   ]
+
+  const filteredProducts = products.filter(
+    (item) => {
+      const matchesCategory =
+        selectedCategory === "All" ||
+        item.category === selectedCategory
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+
+      return matchesCategory && matchesSearch
+    }
+  )
 
   const validateForm = () => {
     if (name.trim().length < 3) {
@@ -770,6 +789,76 @@ function App() {
 
             <div
               style={{
+                width: "100%",
+                maxWidth: "950px",
+                margin: "0 auto 30px auto",
+                paddingInline: "20px",
+                boxSizing: "border-box",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) =>
+                  setSearchQuery(e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  borderRadius: "12px",
+                  border: "1px solid #4a3325",
+                  backgroundColor: "#2c1d14",
+                  color: "white",
+                  fontSize: "16px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: "14px",
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {[
+                  "All",
+                  "Tea",
+                  "Drinks",
+                  "Snacks",
+                ].map((category) => (
+                  <button
+                    key={category}
+                    onClick={() =>
+                      setSelectedCategory(category)
+                    }
+                    style={{
+                      border: "none",
+                      borderRadius: "999px",
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      color:
+                        selectedCategory === category
+                          ? "#1a120b"
+                          : "#f5d6b3",
+                      background:
+                        selectedCategory === category
+                          ? "linear-gradient(135deg, #f0b56e, #c68b59)"
+                          : "#3a261a",
+                    }}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
                 display: "flex",
                 justifyContent: "center",
                 gap: "25px",
@@ -777,7 +866,8 @@ function App() {
                 paddingInline: "20px",
               }}
             >
-              {products.map((item, index) => (
+              {filteredProducts.map(
+                (item, index) => (
                 <div
                   key={index}
                   style={{
@@ -825,7 +915,8 @@ function App() {
                     Add to Cart
                   </button>
                 </div>
-              ))}
+                )
+              )}
             </div>
 
             {/* CART */}
