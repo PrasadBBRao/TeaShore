@@ -19,6 +19,8 @@ function App() {
   const [showOrders, setShowOrders] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] =
+    useState("All")
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -148,29 +150,37 @@ function App() {
   const products = [
     {
       name: "Masala Tea ☕",
+      category: "Tea",
       price: 40,
       image:
         "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&w=800",
     },
     {
       name: "Cold Coffee 🧋",
+      category: "Drinks",
       price: 90,
       image:
         "https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=800",
     },
     {
       name: "French Fries 🍟",
+      category: "Snacks",
       price: 120,
       image:
         "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=800",
     },
   ]
 
-  const filteredProducts = products.filter((item) =>
-    item.name
+  const filteredProducts = products.filter((item) => {
+    const matchesSearch = item.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase())
-  )
+    const matchesCategory =
+      selectedCategory === "All" ||
+      item.category === selectedCategory
+
+    return matchesSearch && matchesCategory
+  })
 
   const validateForm = () => {
     if (name.trim().length < 3) {
@@ -803,6 +813,46 @@ function App() {
                   boxSizing: "border-box",
                 }}
               />
+
+              <div
+                style={{
+                  marginTop: "14px",
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {[
+                  "All",
+                  "Tea",
+                  "Drinks",
+                  "Snacks",
+                ].map((category) => (
+                  <button
+                    key={category}
+                    onClick={() =>
+                      setSelectedCategory(category)
+                    }
+                    style={{
+                      border: "none",
+                      borderRadius: "999px",
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      color:
+                        selectedCategory === category
+                          ? "#1a120b"
+                          : "#f5d6b3",
+                      background:
+                        selectedCategory === category
+                          ? "linear-gradient(135deg, #f0b56e, #c68b59)"
+                          : "#3a261a",
+                    }}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div
