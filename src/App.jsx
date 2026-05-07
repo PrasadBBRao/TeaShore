@@ -23,6 +23,9 @@ function App() {
     useState("All")
   const [lastAddedProduct, setLastAddedProduct] =
     useState(null)
+  const [couponCode, setCouponCode] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState("")
+  const [couponMessage, setCouponMessage] = useState("")
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -150,6 +153,16 @@ function App() {
 
   const deliveryFee = cartItems.length > 0 ? 40 : 0
   const finalTotal = totalPrice + deliveryFee
+  const couponDiscountRate =
+    appliedCoupon === "TEA20"
+      ? 0.2
+      : appliedCoupon === "WELCOME10"
+      ? 0.1
+      : 0
+  const discountAmount = Math.round(
+    finalTotal * couponDiscountRate
+  )
+  const discountedTotal = finalTotal - discountAmount
 
   const products = [
     {
@@ -245,7 +258,7 @@ function App() {
     const newOrder = {
       id: orderId,
       items: cartItems,
-      total: finalTotal,
+      total: discountedTotal,
       payment: paidStatus,
       name,
       phone,
@@ -307,8 +320,31 @@ function App() {
     setAddress("")
     setCity("")
     setPincode("")
+    setCouponCode("")
+    setAppliedCoupon("")
+    setCouponMessage("")
 
     setShowOrders(true)
+  }
+
+  const applyCoupon = () => {
+    const normalizedCoupon = couponCode
+      .trim()
+      .toUpperCase()
+
+    if (
+      normalizedCoupon === "TEA20" ||
+      normalizedCoupon === "WELCOME10"
+    ) {
+      setAppliedCoupon(normalizedCoupon)
+      setCouponMessage(
+        `${normalizedCoupon} applied successfully!`
+      )
+      return
+    }
+
+    setAppliedCoupon("")
+    setCouponMessage("Invalid coupon code")
   }
 
   const trackingSteps = [
@@ -1302,6 +1338,55 @@ function App() {
           >
             <h2>Price Details</h2>
 
+            <div
+              style={{
+                marginTop: "18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) =>
+                  setCouponCode(e.target.value)
+                }
+                style={{
+                  ...inputStyle,
+                  marginTop: 0,
+                  backgroundColor: "#24160f",
+                  border: "1px solid #4a3325",
+                  color: "white",
+                }}
+              />
+
+              <button
+                onClick={applyCoupon}
+                style={{
+                  ...mainButton,
+                  marginTop: 0,
+                }}
+              >
+                Apply Coupon
+              </button>
+
+              {couponMessage && (
+                <p
+                  style={{
+                    margin: 0,
+                    color: appliedCoupon
+                      ? "#8be28b"
+                      : "#ff8f8f",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {couponMessage}
+                </p>
+              )}
+            </div>
+
             <div style={priceRow}>
               <p>Subtotal</p>
               <p>₹{totalPrice}</p>
@@ -1310,6 +1395,16 @@ function App() {
             <div style={priceRow}>
               <p>Delivery Fee</p>
               <p>₹{deliveryFee}</p>
+            </div>
+
+            <div style={priceRow}>
+              <p>Original Total</p>
+              <p>₹{finalTotal}</p>
+            </div>
+
+            <div style={priceRow}>
+              <p>Discount</p>
+              <p>-₹{discountAmount}</p>
             </div>
 
             <hr
@@ -1326,8 +1421,8 @@ function App() {
                 fontWeight: "bold",
               }}
             >
-              <p>Total</p>
-              <p>₹{finalTotal}</p>
+              <p>Final Total</p>
+              <p>₹{discountedTotal}</p>
             </div>
 
             <button
@@ -1372,7 +1467,7 @@ function App() {
               <div>
                 <img
                   src={`https://quickchart.io/qr?text=${encodeURIComponent(
-                    `upi://pay?pa=prasadrao02012004-1@oksbi&pn=TeaShore&am=${finalTotal}&cu=INR`
+                    `upi://pay?pa=prasadrao02012004-1@oksbi&pn=TeaShore&am=${discountedTotal}&cu=INR`
                   )}&size=250`}
                   alt="QR"
                   style={{
