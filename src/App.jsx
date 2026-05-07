@@ -26,6 +26,10 @@ function App() {
   const [couponCode, setCouponCode] = useState("")
   const [appliedCoupon, setAppliedCoupon] = useState("")
   const [couponMessage, setCouponMessage] = useState("")
+  const [showScrollTop, setShowScrollTop] =
+    useState(false)
+  const [isScrollTopHovered, setIsScrollTopHovered] =
+    useState(false)
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -50,6 +54,20 @@ function App() {
       window.removeEventListener(
         "resize",
         handleResize
+      )
+  }, [])
+
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      setShowScrollTop(window.scrollY > 280)
+    }
+
+    window.addEventListener("scroll", handleWindowScroll)
+
+    return () =>
+      window.removeEventListener(
+        "scroll",
+        handleWindowScroll
       )
   }, [])
 
@@ -1601,6 +1619,48 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {showScrollTop && (
+        <button
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          onMouseEnter={() =>
+            setIsScrollTopHovered(true)
+          }
+          onMouseLeave={() =>
+            setIsScrollTopHovered(false)
+          }
+          aria-label="Scroll to top"
+          style={{
+            position: "fixed",
+            right: isMobile ? "16px" : "24px",
+            bottom: isMobile ? "18px" : "28px",
+            width: isMobile ? "48px" : "54px",
+            height: isMobile ? "48px" : "54px",
+            borderRadius: "50%",
+            border: "1px solid #8a5a35",
+            background:
+              "linear-gradient(135deg, #f0b56e, #c68b59)",
+            color: "#1a120b",
+            fontSize: isMobile ? "20px" : "22px",
+            cursor: "pointer",
+            zIndex: 1200,
+            boxShadow: isScrollTopHovered
+              ? "0 0 18px rgba(240, 181, 110, 0.45)"
+              : "0 8px 18px rgba(0, 0, 0, 0.35)",
+            transform: isScrollTopHovered
+              ? "translateY(-2px)"
+              : "translateY(0)",
+            transition: "all 0.2s ease",
+          }}
+        >
+          ⬆️
+        </button>
       )}
       
       <ToastContainer
