@@ -17,6 +17,15 @@ function App() {
   const [showPayment, setShowPayment] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("")
   const [showOrders, setShowOrders] = useState(false)
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [showAdminLoginModal, setShowAdminLoginModal] =
+    useState(false)
+  const [adminUsername, setAdminUsername] = useState("")
+  const [adminPassword, setAdminPassword] = useState("")
+  const [adminLoginMessage, setAdminLoginMessage] =
+    useState("")
+  const [isAdminAuthenticated, setIsAdminAuthenticated] =
+    useState(() => localStorage.getItem("isAdminLoggedIn") === "true")
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] =
@@ -56,6 +65,7 @@ function App() {
     useState("")
 
   const [mobileMenu, setMobileMenu] = useState(false)
+  const adminLogoClickTimestampsRef = useRef([])
 
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
@@ -116,6 +126,14 @@ function App() {
     )
   }, [reservations])
 
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      localStorage.setItem("isAdminLoggedIn", "true")
+      return
+    }
+    localStorage.removeItem("isAdminLoggedIn")
+  }, [isAdminAuthenticated])
+
   const homeRef = useRef(null)
   const menuRef = useRef(null)
   const aboutRef = useRef(null)
@@ -123,6 +141,7 @@ function App() {
 
   const scrollToSection = (ref) => {
     setShowOrders(false)
+    setShowAdmin(false)
     setShowCheckout(false)
     setShowReservations(false)
     setMobileMenu(false)
@@ -656,6 +675,57 @@ function App() {
     return 0
   }
 
+  const totalRevenue = orders.reduce(
+    (total, order) => total + Number(order.total || 0),
+    0
+  )
+  const activeDeliveries = orders.filter(
+    (order) => order.status !== "Delivered ✅"
+  ).length
+  const recentOrders = orders.slice(0, 6)
+
+  const handleLogoClick = () => {
+    const now = Date.now()
+    const recentClicks =
+      adminLogoClickTimestampsRef.current.filter(
+        (timestamp) => now - timestamp <= 1800
+      )
+    recentClicks.push(now)
+    adminLogoClickTimestampsRef.current = recentClicks
+
+    if (recentClicks.length < 5) return
+
+    adminLogoClickTimestampsRef.current = []
+    if (isAdminAuthenticated) {
+      setShowAdmin(true)
+      setShowOrders(false)
+      setShowCheckout(false)
+      setShowReservations(false)
+      return
+    }
+    setAdminUsername("")
+    setAdminPassword("")
+    setAdminLoginMessage("")
+    setShowAdminLoginModal(true)
+  }
+
+  const handleAdminLogin = () => {
+    if (
+      adminUsername === "admin" &&
+      adminPassword === "teashore123"
+    ) {
+      setIsAdminAuthenticated(true)
+      setShowAdmin(true)
+      setShowOrders(false)
+      setShowCheckout(false)
+      setShowReservations(false)
+      setAdminLoginMessage("")
+      setShowAdminLoginModal(false)
+      return
+    }
+    setAdminLoginMessage("Invalid Admin Credentials ⛔")
+  }
+
   return (
     <div
       style={{
@@ -680,8 +750,10 @@ function App() {
         }}
       >
         <h1
+          onClick={handleLogoClick}
           style={{
             fontSize: "clamp(30px,5vw,42px)",
+            cursor: "pointer",
           }}
         >
           TeaShore ☕
@@ -717,6 +789,7 @@ function App() {
             <p
               onClick={() => {
                 setShowOrders(true)
+                setShowAdmin(false)
                 setShowCheckout(false)
                 setShowReservations(false)
               }}
@@ -727,6 +800,7 @@ function App() {
             <p
               onClick={() => {
                 setShowOrders(false)
+                setShowAdmin(false)
                 setShowCheckout(false)
                 setShowReservations(true)
               }}
@@ -799,6 +873,7 @@ function App() {
           <p
             onClick={() => {
               setShowOrders(true)
+              setShowAdmin(false)
               setShowCheckout(false)
               setShowReservations(false)
               setMobileMenu(false)
@@ -810,6 +885,7 @@ function App() {
           <p
             onClick={() => {
               setShowOrders(false)
+              setShowAdmin(false)
               setShowCheckout(false)
               setShowReservations(true)
               setMobileMenu(false)
@@ -839,7 +915,209 @@ function App() {
       )}
 
       {/* ORDERS PAGE */}
-      {showOrders ? (
+      {showAdmin && isAdminAuthenticated ? (
+        <div
+          style={{
+            padding: "40px 7%",
+          }}
+        >
+          <h1
+            style={{
+              textAlign: "center",
+              marginBottom: "30px",
+            }}
+          >
+            Admin Dashboard 📊
+          </h1>
+          <button
+            onClick={() => {
+              setIsAdminAuthenticated(false)
+              setShowAdmin(false)
+            }}
+            style={{
+              ...mainButton,
+              maxWidth: "180px",
+              margin: "0 auto 24px auto",
+              display: "block",
+            }}
+          >
+            Logout
+          </button>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "16px",
+              marginBottom: "24px",
+            }}
+          >
+            <div style={adminCardStyle}>
+              <p style={adminCardTitleStyle}>Total Orders</p>
+              <h2 style={adminCardValueStyle}>{orders.length}</h2>
+            </div>
+            <div style={adminCardStyle}>
+              <p style={adminCardTitleStyle}>Total Revenue</p>
+              <h2 style={adminCardValueStyle}>₹{totalRevenue}</h2>
+            </div>
+            <div style={adminCardStyle}>
+              <p style={adminCardTitleStyle}>Active Deliveries</p>
+              <h2 style={adminCardValueStyle}>
+                {activeDeliveries}
+              </h2>
+            </div>
+            <div style={adminCardStyle}>
+              <p style={adminCardTitleStyle}>
+                Total Reservations
+              </p>
+              <h2 style={adminCardValueStyle}>
+                {reservations.length}
+              </h2>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "18px",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#2c1d14",
+                border: "1px solid #4a3325",
+                borderRadius: "16px",
+                padding: "18px",
+              }}
+            >
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: "14px",
+                }}
+              >
+                Recent Orders
+              </h2>
+              {recentOrders.length === 0 ? (
+                <p style={{ color: "#d2b48c", margin: 0 }}>
+                  No Orders Yet
+                </p>
+              ) : (
+                recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    style={{
+                      backgroundColor: "#24160f",
+                      border: "1px solid #4a3325",
+                      borderRadius: "12px",
+                      padding: "12px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px 0" }}>
+                      <strong>Order ID:</strong> {order.id}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Payment:</strong>{" "}
+                      {order.payment}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Delivery:</strong>{" "}
+                      {order.status}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#f5d6b3",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <strong>Total:</strong> ₹
+                      {order.total}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div
+              style={{
+                backgroundColor: "#2c1d14",
+                border: "1px solid #4a3325",
+                borderRadius: "16px",
+                padding: "18px",
+              }}
+            >
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: "14px",
+                }}
+              >
+                Reservations
+              </h2>
+              {reservations.length === 0 ? (
+                <p style={{ color: "#d2b48c", margin: 0 }}>
+                  No Reservations Yet
+                </p>
+              ) : (
+                reservations.map((reservation) => (
+                  <div
+                    key={reservation.id}
+                    style={{
+                      backgroundColor: "#24160f",
+                      border: "1px solid #4a3325",
+                      borderRadius: "12px",
+                      padding: "12px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px 0" }}>
+                      <strong>Customer:</strong>{" "}
+                      {reservation.name}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Time:</strong>{" "}
+                      {reservation.time}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Members:</strong>{" "}
+                      {reservation.people}
+                    </p>
+                    <p style={{ margin: 0, color: "#f5d6b3" }}>
+                      <strong>Tables:</strong>{" "}
+                      {reservation.tablesAllocated ?? 1}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : showOrders ? (
         <div
           style={{
             padding: "40px 7%",
@@ -2153,6 +2431,75 @@ function App() {
         </div>
       )}
 
+      {showAdminLoginModal && (
+        <div style={overlayStyle}>
+          <div
+            style={{
+              ...popupStyle,
+              maxWidth: "430px",
+            }}
+          >
+            <h2>Admin Login</h2>
+
+            <input
+              type="text"
+              placeholder="Username"
+              value={adminUsername}
+              onChange={(e) =>
+                setAdminUsername(e.target.value)
+              }
+              style={inputStyle}
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={adminPassword}
+              onChange={(e) =>
+                setAdminPassword(e.target.value)
+              }
+              style={inputStyle}
+            />
+
+            <button
+              onClick={handleAdminLogin}
+              style={mainButton}
+            >
+              Login
+            </button>
+
+            {adminLoginMessage && (
+              <p
+                style={{
+                  marginTop: "12px",
+                  marginBottom: 0,
+                  color: "#ff8f8f",
+                  fontWeight: "bold",
+                }}
+              >
+                {adminLoginMessage}
+              </p>
+            )}
+
+            <button
+              onClick={() => {
+                setShowAdminLoginModal(false)
+                setAdminLoginMessage("")
+              }}
+              style={{
+                marginTop: "14px",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#d2b48c",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {showScrollTop && (
         <button
           onClick={() =>
@@ -2288,6 +2635,22 @@ const popupStyle = {
   width: "100%",
   maxWidth: "450px",
   textAlign: "center",
+}
+
+const adminCardStyle = {
+  backgroundColor: "#2c1d14",
+  border: "1px solid #4a3325",
+  borderRadius: "14px",
+  padding: "16px",
+}
+
+const adminCardTitleStyle = {
+  margin: "0 0 8px 0",
+  color: "#d2b48c",
+}
+
+const adminCardValueStyle = {
+  margin: 0,
 }
 
 export default App
