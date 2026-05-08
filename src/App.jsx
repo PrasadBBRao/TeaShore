@@ -30,6 +30,30 @@ function App() {
     useState(false)
   const [isScrollTopHovered, setIsScrollTopHovered] =
     useState(false)
+  const [showReservations, setShowReservations] =
+    useState(false)
+  const [reservations, setReservations] = useState(() => {
+    const savedReservations = localStorage.getItem(
+      "teashore-reservations"
+    )
+    return savedReservations
+      ? JSON.parse(savedReservations)
+      : []
+  })
+  const [reservationName, setReservationName] =
+    useState("")
+  const [reservationPhone, setReservationPhone] =
+    useState("")
+  const [reservationPeople, setReservationPeople] =
+    useState("")
+  const [reservationDate, setReservationDate] =
+    useState("")
+  const [reservationTime, setReservationTime] =
+    useState("")
+  const [reservationDuration, setReservationDuration] =
+    useState("")
+  const [reservationMessage, setReservationMessage] =
+    useState("")
 
   const [mobileMenu, setMobileMenu] = useState(false)
 
@@ -85,6 +109,13 @@ function App() {
     )
   }, [orders])
 
+  useEffect(() => {
+    localStorage.setItem(
+      "teashore-reservations",
+      JSON.stringify(reservations)
+    )
+  }, [reservations])
+
   const homeRef = useRef(null)
   const menuRef = useRef(null)
   const aboutRef = useRef(null)
@@ -93,6 +124,7 @@ function App() {
   const scrollToSection = (ref) => {
     setShowOrders(false)
     setShowCheckout(false)
+    setShowReservations(false)
     setMobileMenu(false)
 
     ref.current.scrollIntoView({
@@ -365,6 +397,246 @@ function App() {
     setCouponMessage("Invalid coupon code")
   }
 
+  const getMinutesFromTime = (timeValue) => {
+    const [hours, minutes] = timeValue
+      .split(":")
+      .map(Number)
+    return hours * 60 + minutes
+  }
+
+  const getTodayDate = () =>
+    new Date().toISOString().split("T")[0]
+
+  const canCancelReservation = (reservation) => {
+    if (!reservation.createdAt) return false
+    const elapsedMs = Date.now() - reservation.createdAt
+    return elapsedMs <= 60 * 60 * 1000
+  }
+
+  const handleReservationTimeChange = (value) => {
+    const isDeleting =
+      value.length < reservationTime.length
+    const digitsOnly = value
+      .replace(/\D/g, "")
+      .slice(0, 4)
+
+    if (digitsOnly.length === 0) {
+      setReservationTime("")
+      return
+    }
+
+    if (digitsOnly.length >= 2) {
+      const hour = Number(digitsOnly.slice(0, 2))
+      if (hour > 23) return
+    }
+
+    if (digitsOnly.length >= 3) {
+      const firstMinuteDigit = Number(digitsOnly[2])
+      if (firstMinuteDigit > 5) return
+    }
+
+    if (digitsOnly.length === 4) {
+      const minute = Number(digitsOnly.slice(2, 4))
+      if (minute > 59) return
+    }
+
+    if (isDeleting) {
+      if (digitsOnly.length <= 2) {
+        setReservationTime(digitsOnly)
+        return
+      }
+      setReservationTime(
+        `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2)}`
+      )
+      return
+    }
+
+    if (digitsOnly.length === 1) {
+      const firstHourDigit = Number(digitsOnly)
+      if (firstHourDigit >= 3) {
+        setReservationTime(`0${digitsOnly}:`)
+        return
+      }
+      setReservationTime(digitsOnly)
+      return
+    }
+
+    if (digitsOnly.length === 2) {
+      setReservationTime(`${digitsOnly}:`)
+      return
+    }
+
+    setReservationTime(
+      `${digitsOnly.slice(0, 2)}:${digitsOnly.slice(2)}`
+    )
+  }
+
+  const handleBookTable = () => {
+    const peopleCount = Number(reservationPeople)
+    const durationHours = Number(reservationDuration)
+    const openingTimeMinutes = 8 * 60
+    const closingTimeMinutes = 23 * 60
+    const todayDate = getTodayDate()
+
+    if (reservationName.trim().length < 3) {
+      setReservationMessage(
+        "Please enter a valid full name"
+      )
+      return
+    }
+
+    if (!/^[0-9]{10}$/.test(reservationPhone)) {
+      setReservationMessage(
+        "Invalid phone number (must be exactly 10 digits)"
+      )
+      return
+    }
+
+    if (
+      !reservationDate ||
+      Number.isNaN(durationHours) ||
+      durationHours <= 0
+    ) {
+      setReservationMessage(
+        "Invalid reservation timing"
+      )
+      return
+    }
+
+    if (reservationDate !== todayDate) {
+      setReservationMessage(
+        "Reservations Allowed Only for Today ☕"
+      )
+      return
+    }
+
+    if (
+      !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(
+        reservationTime
+      )
+    ) {
+      setReservationMessage(
+        "Invalid reservation timing (use 24-hour format, e.g. 14:00)"
+      )
+      return
+    }
+
+    if (
+      Number.isNaN(peopleCount) ||
+      peopleCount < 1 ||
+      peopleCount > 50
+    ) {
+      setReservationMessage(
+        "Invalid members count (allowed: 1 to 50)"
+      )
+      return
+    }
+
+    const totalSeatsForToday = reservations.filter(
+      (reservation) => reservation.date === reservationDate
+    ).length
+    if (totalSeatsForToday >= 12) {
+      setReservationMessage(
+        "All Reservation Seats Filled for Today ⛔"
+      )
+      return
+    }
+
+    const slotReservations = reservations.filter(
+      (reservation) =>
+        reservation.date === reservationDate &&
+        reservation.time === reservationTime
+    ).length
+    if (slotReservations >= 6) {
+      setReservationMessage(
+        "Reservations Full for This Time ⛔"
+      )
+      return
+    }
+
+    const newStart = getMinutesFromTime(reservationTime)
+    const newEnd = newStart + durationHours * 60
+
+    if (
+      newStart < openingTimeMinutes ||
+      newEnd > closingTimeMinutes
+    ) {
+      setReservationMessage(
+        "Invalid reservation timing (Cafe hours: 8:00 AM to 11:00 PM)"
+      )
+      return
+    }
+
+    const hasConflict = reservations.some(
+      (reservation) => {
+        if (reservation.date !== reservationDate) {
+          return false
+        }
+        const existingStart = getMinutesFromTime(
+          reservation.time
+        )
+        const existingEnd =
+          existingStart + reservation.duration * 60
+        return (
+          newStart < existingEnd &&
+          newEnd > existingStart
+        )
+      }
+    )
+
+    if (hasConflict) {
+      setReservationMessage(
+        "Table Already Reserved for This Time ⛔"
+      )
+      return
+    }
+
+    const newReservation = {
+      id:
+        "RSV" +
+        Math.floor(1000 + Math.random() * 9000),
+      name: reservationName.trim(),
+      phone: reservationPhone,
+      people: peopleCount,
+      date: reservationDate,
+      time: reservationTime,
+      duration: durationHours,
+      tablesAllocated: peopleCount >= 8 ? 2 : 1,
+      createdAt: Date.now(),
+    }
+
+    setReservations((prev) => [newReservation, ...prev])
+    setReservationMessage(
+      "Table Reserved Successfully ☕"
+    )
+    setReservationName("")
+    setReservationPhone("")
+    setReservationPeople("")
+    setReservationDate("")
+    setReservationTime("")
+    setReservationDuration("")
+  }
+
+  const handleCancelReservation = (reservationId) => {
+    const reservationToCancel = reservations.find(
+      (reservation) => reservation.id === reservationId
+    )
+
+    if (!reservationToCancel) return
+
+    if (!canCancelReservation(reservationToCancel)) {
+      setReservationMessage("Cancellation Time Expired ⛔")
+      return
+    }
+
+    setReservations((prev) =>
+      prev.filter(
+        (reservation) => reservation.id !== reservationId
+      )
+    )
+    setReservationMessage("Reservation Cancelled Successfully")
+  }
+
   const trackingSteps = [
     "Preparing ☕",
     "Out for Delivery 🚚",
@@ -446,9 +718,20 @@ function App() {
               onClick={() => {
                 setShowOrders(true)
                 setShowCheckout(false)
+                setShowReservations(false)
               }}
             >
               Orders
+            </p>
+
+            <p
+              onClick={() => {
+                setShowOrders(false)
+                setShowCheckout(false)
+                setShowReservations(true)
+              }}
+            >
+              Reservations
             </p>
 
             <div
@@ -517,10 +800,22 @@ function App() {
             onClick={() => {
               setShowOrders(true)
               setShowCheckout(false)
+              setShowReservations(false)
               setMobileMenu(false)
             }}
           >
             Orders
+          </p>
+
+          <p
+            onClick={() => {
+              setShowOrders(false)
+              setShowCheckout(false)
+              setShowReservations(true)
+              setMobileMenu(false)
+            }}
+          >
+            Reservations
           </p>
 
           <div
@@ -1613,6 +1908,243 @@ function App() {
                 border: "none",
                 color: "#d2b48c",
                 cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showReservations && (
+        <div style={overlayStyle}>
+          <div
+            style={{
+              ...popupStyle,
+              maxWidth: "620px",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              textAlign: "left",
+            }}
+          >
+            <h2 style={{ textAlign: "center" }}>
+              Table Reservations 🍽️
+            </h2>
+
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={reservationName}
+              onChange={(e) =>
+                setReservationName(e.target.value)
+              }
+              style={inputStyle}
+            />
+
+            <input
+              type="text"
+              placeholder="Phone Number"
+              value={reservationPhone}
+              onChange={(e) =>
+                setReservationPhone(
+                  e.target.value
+                    .replace(/\D/g, "")
+                    .slice(0, 10)
+                )
+              }
+              inputMode="numeric"
+              maxLength={10}
+              style={inputStyle}
+            />
+
+            <input
+              type="number"
+              placeholder="Number of People"
+              min="1"
+              max="50"
+              value={reservationPeople}
+              onChange={(e) => {
+                const rawValue = e.target.value
+                if (rawValue === "") {
+                  setReservationPeople("")
+                  return
+                }
+                const normalizedValue = Math.min(
+                  50,
+                  Math.max(1, Number(rawValue))
+                )
+                setReservationPeople(
+                  String(normalizedValue)
+                )
+              }}
+              style={inputStyle}
+            />
+
+            <input
+              type="date"
+              value={reservationDate}
+              onChange={(e) =>
+                setReservationDate(e.target.value)
+              }
+              min={getTodayDate()}
+              max={getTodayDate()}
+              style={inputStyle}
+            />
+
+            <input
+              type="text"
+              placeholder="Time (24-hour format, e.g. 14:00)"
+              value={reservationTime}
+              onChange={(e) =>
+                handleReservationTimeChange(
+                  e.target.value
+                )
+              }
+              inputMode="numeric"
+              maxLength={5}
+              style={inputStyle}
+            />
+
+            <input
+              type="number"
+              placeholder="Reservation Duration (hours)"
+              min="1"
+              step="1"
+              value={reservationDuration}
+              onChange={(e) =>
+                setReservationDuration(
+                  e.target.value
+                )
+              }
+              style={inputStyle}
+            />
+
+            <button
+              onClick={handleBookTable}
+              style={mainButton}
+            >
+              Book Table
+            </button>
+
+            {reservationMessage && (
+              <p
+                style={{
+                  marginTop: "12px",
+                  marginBottom: 0,
+                  color: reservationMessage.includes(
+                    "Successfully"
+                  )
+                    ? "#8be28b"
+                    : "#ff8f8f",
+                  fontWeight: "bold",
+                  textAlign: "center",
+                }}
+              >
+                {reservationMessage}
+              </p>
+            )}
+
+            <div
+              style={{
+                marginTop: "24px",
+                borderTop: "1px solid #4a3325",
+                paddingTop: "18px",
+              }}
+            >
+              <h3
+                style={{
+                  textAlign: "center",
+                  marginTop: 0,
+                }}
+              >
+                Booked Reservations
+              </h3>
+
+              {reservations.length === 0 ? (
+                <p
+                  style={{
+                    color: "#d2b48c",
+                    textAlign: "center",
+                  }}
+                >
+                  No Reservations Yet
+                </p>
+              ) : (
+                reservations.map((reservation) => (
+                  <div
+                    key={reservation.id}
+                    style={{
+                      backgroundColor: "#24160f",
+                      border:
+                        "1px solid #4a3325",
+                      borderRadius: "12px",
+                      padding: "12px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px 0" }}>
+                      <strong>
+                        {reservation.name}
+                      </strong>{" "}
+                      • {reservation.people} People
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#d2b48c",
+                      }}
+                    >
+                      {reservation.date} |{" "}
+                      {reservation.time} |{" "}
+                      {reservation.duration}h | Tables:{" "}
+                      {reservation.tablesAllocated ?? 1}
+                    </p>
+                    <button
+                      onClick={() =>
+                        handleCancelReservation(
+                          reservation.id
+                        )
+                      }
+                      disabled={
+                        !canCancelReservation(reservation)
+                      }
+                      style={{
+                        ...mainButton,
+                        marginTop: "10px",
+                        marginBottom: 0,
+                        opacity: canCancelReservation(
+                          reservation
+                        )
+                          ? 1
+                          : 0.6,
+                        cursor: canCancelReservation(
+                          reservation
+                        )
+                          ? "pointer"
+                          : "not-allowed",
+                      }}
+                    >
+                      {canCancelReservation(reservation)
+                        ? "Cancel Reservation"
+                        : "Cancellation Time Expired ⛔"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setShowReservations(false)
+                setReservationMessage("")
+              }}
+              style={{
+                marginTop: "16px",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#d2b48c",
+                cursor: "pointer",
+                width: "100%",
               }}
             >
               Close
