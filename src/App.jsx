@@ -12,6 +12,12 @@ function App() {
     const savedOrders = localStorage.getItem("teashore-orders")
     return savedOrders ? JSON.parse(savedOrders) : []
   })
+  const [tableSessions, setTableSessions] = useState(() => {
+    const savedSessions = localStorage.getItem(
+      "teashore-table-sessions"
+    )
+    return savedSessions ? JSON.parse(savedSessions) : []
+  })
 
   const [showCheckout, setShowCheckout] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
@@ -63,6 +69,10 @@ function App() {
     useState("")
   const [reservationMessage, setReservationMessage] =
     useState("")
+  const [currentTableSessionId, setCurrentTableSessionId] =
+    useState(null)
+  const [showActiveTableSessionPopup, setShowActiveTableSessionPopup] =
+    useState(false)
 
   const [mobileMenu, setMobileMenu] = useState(false)
   const adminLogoClickTimestampsRef = useRef([])
@@ -76,6 +86,20 @@ function App() {
   const [isMobile, setIsMobile] = useState(
     window.innerWidth < 768
   )
+  const detectedTableNumber = (() => {
+    const tableFromQuery = new URLSearchParams(
+      window.location.search
+    ).get("table")
+    if (!tableFromQuery) return null
+    const parsedTableNumber = Number(tableFromQuery)
+    if (
+      !Number.isInteger(parsedTableNumber) ||
+      parsedTableNumber < 1
+    )
+      return null
+    return parsedTableNumber
+  })()
+  const isCafeQrOrderingMode = detectedTableNumber !== null
 
   useEffect(() => {
     const handleResize = () => {
@@ -121,6 +145,13 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem(
+      "teashore-table-sessions",
+      JSON.stringify(tableSessions)
+    )
+  }, [tableSessions])
+
+  useEffect(() => {
+    localStorage.setItem(
       "teashore-reservations",
       JSON.stringify(reservations)
     )
@@ -133,6 +164,46 @@ function App() {
     }
     localStorage.removeItem("isAdminLoggedIn")
   }, [isAdminAuthenticated])
+
+  useEffect(() => {
+    if (!isCafeQrOrderingMode || detectedTableNumber === null) {
+      setCurrentTableSessionId(null)
+      setShowActiveTableSessionPopup(false)
+      return
+    }
+
+    const existingSession = tableSessions.find(
+      (session) =>
+        session.tableNumber === detectedTableNumber &&
+        session.status !== "Closed"
+    )
+
+    if (existingSession) {
+      setCurrentTableSessionId(existingSession.id)
+      setShowActiveTableSessionPopup(
+        existingSession.id !== currentTableSessionId
+      )
+      return
+    }
+
+    const newSessionId =
+      "TBL" + Math.floor(10000 + Math.random() * 90000)
+    const newSession = {
+      id: newSessionId,
+      tableNumber: detectedTableNumber,
+      status: "Active",
+      createdAt: Date.now(),
+      closedAt: null,
+    }
+    setTableSessions((prev) => [newSession, ...prev])
+    setCurrentTableSessionId(newSessionId)
+    setShowActiveTableSessionPopup(false)
+  }, [
+    isCafeQrOrderingMode,
+    detectedTableNumber,
+    tableSessions,
+    currentTableSessionId,
+  ])
 
   const homeRef = useRef(null)
   const menuRef = useRef(null)
@@ -302,6 +373,10 @@ function App() {
       return false
     }
 
+    if (isCafeQrOrderingMode) {
+      return true
+    }
+
     if (address.trim().length < 10) {
       alert("Please enter complete address")
       return false
@@ -321,6 +396,26 @@ function App() {
   }
 
   const createOrder = (paidStatus) => {
+    if (isCafeQrOrderingMode) {
+      if (!currentTableSessionId) {
+        alert(
+          "Table session unavailable. Please refresh and scan QR again."
+        )
+        return
+      }
+
+      const matchedSession = tableSessions.find(
+        (session) => session.id === currentTableSessionId
+      )
+
+      if (!matchedSession || matchedSession.status === "Closed") {
+        alert(
+          "This table session is closed. Please scan QR again for a new session."
+        )
+        return
+      }
+    }
+
     const orderId =
       "TS" + Math.floor(1000 + Math.random() * 9000)
 
@@ -334,11 +429,34 @@ function App() {
       address,
       city,
       pincode,
+      tableNumber: isCafeQrOrderingMode
+        ? detectedTableNumber
+        : null,
+      tableSessionId: isCafeQrOrderingMode
+        ? currentTableSessionId
+        : null,
       status: "Preparing ☕",
       time: new Date().toLocaleTimeString(),
     }
 
     setOrders((prev) => [newOrder, ...prev])
+
+    if (isCafeQrOrderingMode && currentTableSessionId) {
+      setTableSessions((prevSessions) =>
+        prevSessions.map((session) => {
+          if (session.id !== currentTableSessionId) return session
+          if (session.status === "Closed") return session
+          return {
+            ...session,
+            status:
+              paidStatus === "Paid ✅" ||
+              session.status === "Paid"
+                ? "Paid"
+                : "Active",
+          }
+        })
+      )
+    }
 
     setTimeout(() => {
       setOrders((prevOrders) =>
@@ -726,6 +844,24 @@ function App() {
     setAdminLoginMessage("Invalid Admin Credentials ⛔")
   }
 
+  const handleContinueTableSession = () => {
+    setShowActiveTableSessionPopup(false)
+  }
+
+  const handleCloseTable = (sessionId) => {
+    setTableSessions((prevSessions) =>
+      prevSessions.map((session) =>
+        session.id === sessionId
+          ? {
+              ...session,
+              status: "Closed",
+              closedAt: Date.now(),
+            }
+          : session
+      )
+    )
+  }
+
   return (
     <div
       style={{
@@ -1026,6 +1162,29 @@ function App() {
                         color: "#d2b48c",
                       }}
                     >
+                      <strong>Table:</strong>{" "}
+                      {order.tableNumber ?? "Delivery"}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Order Details:</strong>{" "}
+                      {order.items
+                        .map(
+                          (item) =>
+                            `${item.name} x${item.quantity}`
+                        )
+                        .join(", ")}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
                       <strong>Payment:</strong>{" "}
                       {order.payment}
                     </p>
@@ -1111,6 +1270,75 @@ function App() {
                       <strong>Tables:</strong>{" "}
                       {reservation.tablesAllocated ?? 1}
                     </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div
+              style={{
+                backgroundColor: "#2c1d14",
+                border: "1px solid #4a3325",
+                borderRadius: "16px",
+                padding: "18px",
+              }}
+            >
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: "14px",
+                }}
+              >
+                Table Sessions
+              </h2>
+              {tableSessions.length === 0 ? (
+                <p style={{ color: "#d2b48c", margin: 0 }}>
+                  No Table Sessions Yet
+                </p>
+              ) : (
+                tableSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    style={{
+                      backgroundColor: "#24160f",
+                      border: "1px solid #4a3325",
+                      borderRadius: "12px",
+                      padding: "12px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px 0" }}>
+                      <strong>Table:</strong>{" "}
+                      {session.tableNumber}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Status:</strong>{" "}
+                      {session.status}
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Session ID:</strong>{" "}
+                      {session.id}
+                    </p>
+                    {session.status !== "Closed" && (
+                      <button
+                        onClick={() =>
+                          handleCloseTable(session.id)
+                        }
+                        style={mainButton}
+                      >
+                        Close Table
+                      </button>
+                    )}
                   </div>
                 ))
               )}
@@ -1926,8 +2154,22 @@ function App() {
               }}
             >
               <h2>
-                📍 Delivery Details
+                {isCafeQrOrderingMode
+                  ? "Cafe QR Ordering Mode ☕"
+                  : "📍 Delivery Details"}
               </h2>
+              {isCafeQrOrderingMode && (
+                <p
+                  style={{
+                    marginTop: "8px",
+                    marginBottom: "6px",
+                    color: "#d2b48c",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Ordering For Table {detectedTableNumber} ☕
+                </p>
+              )}
 
               <input
                 type="text"
@@ -1949,39 +2191,43 @@ function App() {
                 style={inputStyle}
               />
 
-              <input
-                type="text"
-                placeholder="Street Address"
-                value={address}
-                onChange={(e) =>
-                  setAddress(
-                    e.target.value
-                  )
-                }
-                style={inputStyle}
-              />
+              {!isCafeQrOrderingMode && (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Street Address"
+                    value={address}
+                    onChange={(e) =>
+                      setAddress(
+                        e.target.value
+                      )
+                    }
+                    style={inputStyle}
+                  />
 
-              <input
-                type="text"
-                placeholder="City"
-                value={city}
-                onChange={(e) =>
-                  setCity(e.target.value)
-                }
-                style={inputStyle}
-              />
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={city}
+                    onChange={(e) =>
+                      setCity(e.target.value)
+                    }
+                    style={inputStyle}
+                  />
 
-              <input
-                type="text"
-                placeholder="Pincode"
-                value={pincode}
-                onChange={(e) =>
-                  setPincode(
-                    e.target.value
-                  )
-                }
-                style={inputStyle}
-              />
+                  <input
+                    type="text"
+                    placeholder="Pincode"
+                    value={pincode}
+                    onChange={(e) =>
+                      setPincode(
+                        e.target.value
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </>
+              )}
             </div>
           </div>
 
@@ -2189,6 +2435,30 @@ function App() {
               }}
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showActiveTableSessionPopup && isCafeQrOrderingMode && (
+        <div style={overlayStyle}>
+          <div style={popupStyle}>
+            <h2
+              style={{
+                marginTop: 0,
+                marginBottom: "14px",
+              }}
+            >
+              ⚠️ Table {detectedTableNumber} Already Has an Active Order
+            </h2>
+            <p style={{ color: "#d2b48c", marginTop: 0 }}>
+              Continue with the same table session.
+            </p>
+            <button
+              onClick={handleContinueTableSession}
+              style={mainButton}
+            >
+              Continue Ordering
             </button>
           </div>
         </div>
