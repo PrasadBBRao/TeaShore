@@ -123,11 +123,18 @@ function Orders({ orders, selectedOrder, setSelectedOrder }) {
                     {order.phone}
                   </p>
 
-                  <p>
-                    <strong>Address:</strong>{" "}
-                    {order.address},{" "}
-                    {order.city}
-                  </p>
+                  {order.tableNumber ? (
+                    <p>
+                      <strong>Table:</strong>{" "}
+                      Table {order.tableNumber} 🍽️
+                    </p>
+                  ) : (
+                    <p>
+                      <strong>Address:</strong>{" "}
+                      {order.address},{" "}
+                      {order.city}
+                    </p>
+                  )}
 
                   <p>
                     <strong>Payment:</strong>{" "}

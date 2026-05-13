@@ -102,22 +102,29 @@ function Checkout({
               marginTop: "40px",
             }}
           >
-            <h2>
-              {isCafeQrOrderingMode
-                ? "Cafe QR Ordering Mode ☕"
-                : "📍 Delivery Details"}
-            </h2>
-            {isCafeQrOrderingMode && (
-              <p
-                style={{
-                  marginTop: "8px",
-                  marginBottom: "6px",
-                  color: "#d2b48c",
-                  fontWeight: "bold",
-                }}
-              >
-                Ordering For Table {detectedTableNumber} ☕
-              </p>
+            {isCafeQrOrderingMode ? (
+              <>
+                <h2 style={{ marginBottom: "8px" }}>☕ Table Order</h2>
+                <div
+                  style={{
+                    backgroundColor: "#24160f",
+                    border: "2px solid #c68b59",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    marginBottom: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  <p style={{ margin: "0 0 8px 0", color: "#d2b48c", fontSize: "14px" }}>
+                    ORDERING FOR
+                  </p>
+                  <h3 style={{ margin: 0, fontSize: "32px" }}>
+                    Table {detectedTableNumber} 🍽️
+                  </h3>
+                </div>
+              </>
+            ) : (
+              <h2>📍 Delivery Details</h2>
             )}
 
             <input

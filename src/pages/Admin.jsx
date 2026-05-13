@@ -289,7 +289,7 @@ function Admin({
                       color: "#d2b48c",
                     }}
                   >
-                    <strong>Delivery:</strong>{" "}
+                    <strong>{order.tableNumber ? "Service Status:" : "Delivery Status:"}</strong>{" "}
                     {order.status}
                   </p>
                   <p
