@@ -163,8 +163,9 @@ function App() {
     )
 
     if (existingSession) {
+      const isNewSession = currentTableSessionId !== existingSession.id
       setCurrentTableSessionId(existingSession.id)
-      setShowActiveTableSessionPopup(existingSession.id !== currentTableSessionId)
+      setShowActiveTableSessionPopup(isNewSession)
       return
     }
 
@@ -285,10 +286,12 @@ function App() {
 
     const orderId = "TS" + Math.floor(1000 + Math.random() * 9000)
 
+    const orderTotal = isCafeQrOrderingMode ? totalPrice : discountedTotal
+
     const newOrder = {
       id: orderId,
       items: cartItems,
-      total: discountedTotal,
+      total: orderTotal,
       payment: paidStatus,
       name,
       phone,
@@ -323,7 +326,7 @@ function App() {
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
-            ? { ...order, status: "Out for Delivery 🚚" }
+            ? { ...order, status: isCafeQrOrderingMode ? "Ready for Serving 🍽️" : "Out for Delivery 🚚" }
             : order
         )
       )
@@ -333,7 +336,7 @@ function App() {
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
-            ? { ...order, status: "Reached Your Destination 📍" }
+            ? { ...order, status: isCafeQrOrderingMode ? "Served to Table ✅" : "Reached Your Destination 📍" }
             : order
         )
       )
@@ -343,7 +346,7 @@ function App() {
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId
-            ? { ...order, status: "Delivered ✅" }
+            ? { ...order, status: isCafeQrOrderingMode ? "Completed 🎉" : "Delivered ✅" }
             : order
         )
       )
@@ -783,7 +786,7 @@ function App() {
         reservationMessage={reservationMessage}
       />
 
-      {cartItems.length > 0 && (
+      {cartItems.length > 0 && !showCheckout && !showOrders && !showAdmin && (
         <div
           style={{
             position: "fixed",
@@ -792,21 +795,24 @@ function App() {
             right: 0,
             backgroundColor: "#2c1d14",
             borderTop: "2px solid #c68b59",
-            padding: "16px 20px",
+            padding: isMobile ? "12px 16px" : "16px 20px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: isMobile ? "10px" : "15px",
+            flexWrap: isMobile ? "wrap" : "nowrap",
             zIndex: 1100,
             boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.3)",
+            boxSizing: "border-box",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "18px" }}>🛒</span>
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "12px", minWidth: isMobile ? "auto" : "fit-content" }}>
+            <span style={{ fontSize: isMobile ? "16px" : "18px" }}>🛒</span>
             <div>
-              <div style={{ fontWeight: "bold", fontSize: "16px" }}>
+              <div style={{ fontWeight: "bold", fontSize: isMobile ? "14px" : "16px" }}>
                 {cartItems.reduce((sum, item) => sum + item.quantity, 0)} items
               </div>
-              <div style={{ color: "#d2b48c", fontSize: "14px" }}>
+              <div style={{ color: "#d2b48c", fontSize: isMobile ? "12px" : "14px" }}>
                 Total: ₹{discountedTotal}
               </div>
             </div>
@@ -823,16 +829,19 @@ function App() {
               color: "white",
               border: "none",
               borderRadius: "8px",
-              padding: "12px 20px",
-              fontSize: "16px",
+              padding: isMobile ? "10px 14px" : "12px 20px",
+              fontSize: isMobile ? "14px" : "16px",
               fontWeight: "bold",
               cursor: "pointer",
               transition: "background-color 0.2s ease",
+              whiteSpace: "nowrap",
+              flex: isMobile ? "1 1 auto" : "0 0 auto",
+              minWidth: isMobile ? "100px" : "auto",
             }}
             onMouseEnter={(e) => (e.target.style.backgroundColor = "#a67c52")}
             onMouseLeave={(e) => (e.target.style.backgroundColor = "#c68b59")}
           >
-            Proceed to Checkout →
+            Proceed →
           </button>
         </div>
       )}

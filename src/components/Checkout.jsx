@@ -236,20 +236,26 @@ function Checkout({
             <p>₹{totalPrice}</p>
           </div>
 
-          <div style={priceRow}>
-            <p>Delivery Fee</p>
-            <p>₹{deliveryFee}</p>
-          </div>
+          {!isCafeQrOrderingMode && (
+            <div style={priceRow}>
+              <p>Delivery Fee</p>
+              <p>₹{deliveryFee}</p>
+            </div>
+          )}
 
-          <div style={priceRow}>
-            <p>Original Total</p>
-            <p>₹{finalTotal}</p>
-          </div>
+          {!isCafeQrOrderingMode && (
+            <div style={priceRow}>
+              <p>Original Total</p>
+              <p>₹{finalTotal}</p>
+            </div>
+          )}
 
-          <div style={priceRow}>
-            <p>Discount</p>
-            <p>-₹{discountAmount}</p>
-          </div>
+          {!isCafeQrOrderingMode && (
+            <div style={priceRow}>
+              <p>Discount</p>
+              <p>-₹{discountAmount}</p>
+            </div>
+          )}
 
           <hr
             style={{
@@ -266,7 +272,7 @@ function Checkout({
             }}
           >
             <p>Final Total</p>
-            <p>₹{discountedTotal}</p>
+            <p>₹{isCafeQrOrderingMode ? totalPrice : discountedTotal}</p>
           </div>
 
           {isCafeQrOrderingMode ? (

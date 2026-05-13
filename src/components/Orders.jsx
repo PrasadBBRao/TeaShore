@@ -1,4 +1,4 @@
-import { trackingSteps, getTrackingStepIndex } from "../utils/helpers"
+import { getTrackingStepIndex, isQrCafeOrder, getTrackingStepsForOrder } from "../utils/helpers"
 
 function Orders({ orders, selectedOrder, setSelectedOrder }) {
   return (
@@ -159,7 +159,7 @@ function Orders({ orders, selectedOrder, setSelectedOrder }) {
                         alignItems: "flex-start",
                       }}
                     >
-                      {trackingSteps.map(
+                      {getTrackingStepsForOrder(order).map(
                         (step, stepIndex) => {
                           const currentStepIndex =
                             getTrackingStepIndex(
@@ -257,7 +257,7 @@ function Orders({ orders, selectedOrder, setSelectedOrder }) {
                               </div>
 
                               {stepIndex <
-                                trackingSteps.length -
+                                getTrackingStepsForOrder(order).length -
                                   1 && (
                                 <div
                                   style={{
@@ -282,6 +282,12 @@ function Orders({ orders, selectedOrder, setSelectedOrder }) {
                         }
                       )}
                     </div>
+
+                    {isQrCafeOrder(order) && order.status === "Pending" && (
+                      <p style={{ marginTop: "12px", marginBottom: 0, color: "#c68b59", fontStyle: "italic", fontSize: "14px" }}>
+                        ⏱️ Estimated Preparation Time: 10-15 mins
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

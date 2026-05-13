@@ -82,13 +82,15 @@ function Reservation({
 
   if (!show) return null
 
+  const isMobile = window.innerWidth < 768
+
   return (
     <div style={overlayStyle}>
       <div
         style={{
           ...popupStyle,
-          maxWidth: "620px",
-          maxHeight: "85vh",
+          maxWidth: isMobile ? "90vw" : "620px",
+          maxHeight: "90vh",
           overflowY: "auto",
           textAlign: "left",
         }}

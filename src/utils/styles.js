@@ -72,15 +72,19 @@ export const overlayStyle = {
   zIndex: 1000,
   padding: "20px",
   boxSizing: "border-box",
+  overflowY: "auto",
 }
 
 export const popupStyle = {
   backgroundColor: "#2c1d14",
-  padding: "30px",
+  padding: "clamp(20px, 5vw, 30px)",
   borderRadius: "20px",
   width: "100%",
   maxWidth: "450px",
   textAlign: "center",
+  boxSizing: "border-box",
+  maxHeight: "85vh",
+  overflowY: "auto",
 }
 
 export const adminCardStyle = {

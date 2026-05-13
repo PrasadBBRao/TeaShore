@@ -37,6 +37,9 @@ export const canCancelReservation = (reservation) => {
 
 export const getTrackingStepIndex = (status) => {
   if (status === "Preparing ☕") return 0
+  if (status === "Ready for Serving 🍽️") return 1
+  if (status === "Served to Table ✅") return 2
+  if (status === "Completed 🎉") return 3
   if (status === "Out for Delivery 🚚") return 1
   if (
     status === "Reached Destination 📍" ||
@@ -44,7 +47,19 @@ export const getTrackingStepIndex = (status) => {
   )
     return 2
   if (status === "Delivered ✅") return 3
+  if (status === "Pending") return 0
   return 0
+}
+
+export const isQrCafeOrder = (order) => {
+  return order?.tableNumber !== null && order?.tableNumber !== undefined
+}
+
+export const getTrackingStepsForOrder = (order) => {
+  if (isQrCafeOrder(order)) {
+    return ["Preparing ☕", "Ready for Serving 🍽️", "Served to Table ✅", "Completed 🎉"]
+  }
+  return ["Preparing ☕", "Out for Delivery 🚚", "Reached Destination 📍", "Delivered ✅"]
 }
 
 export const products = [
