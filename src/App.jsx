@@ -96,6 +96,7 @@ function App() {
   const aboutRef = useRef(null)
   const contactRef = useRef(null)
   const checkoutRef = useRef(null)
+  const lastShownPopupSessionRef = useRef(null)
   const adminLogoClickTimestampsRef = useRef([])
 
   // ===== QR ORDERING DETECTION =====
@@ -153,6 +154,7 @@ function App() {
     if (!isCafeQrOrderingMode || detectedTableNumber === null) {
       setCurrentTableSessionId(null)
       setShowActiveTableSessionPopup(false)
+      lastShownPopupSessionRef.current = null
       return
     }
 
@@ -163,12 +165,17 @@ function App() {
     )
 
     if (existingSession) {
-      const isNewSession = currentTableSessionId !== existingSession.id
       setCurrentTableSessionId(existingSession.id)
-      setShowActiveTableSessionPopup(isNewSession)
+      
+      // Show popup once per session instance
+      if (lastShownPopupSessionRef.current !== existingSession.id) {
+        setShowActiveTableSessionPopup(true)
+        lastShownPopupSessionRef.current = existingSession.id
+      }
       return
     }
 
+    // No existing session, create a new one
     const newSessionId = "TBL" + Math.floor(10000 + Math.random() * 90000)
     const newSession = {
       id: newSessionId,
@@ -180,7 +187,8 @@ function App() {
     setTableSessions((prev) => [newSession, ...prev])
     setCurrentTableSessionId(newSessionId)
     setShowActiveTableSessionPopup(false)
-  }, [isCafeQrOrderingMode, detectedTableNumber, tableSessions, currentTableSessionId])
+    lastShownPopupSessionRef.current = null
+  }, [isCafeQrOrderingMode, detectedTableNumber, tableSessions])
 
   // ===== PRICE CALCULATIONS =====
   const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
