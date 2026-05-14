@@ -12,6 +12,22 @@ import Admin from "./pages/Admin"
 function App() {
   // ===== CART STATE =====
   const [cartItems, setCartItems] = useState(() => {
+    // For cafe QR mode, check if there's a table-specific cart saved
+    const tableFromQuery = new URLSearchParams(window.location.search).get("table")
+    if (tableFromQuery) {
+      const savedSessions = localStorage.getItem("teashore-table-sessions")
+      const sessions = savedSessions ? JSON.parse(savedSessions) : []
+      const existingSession = sessions.find(
+        (session) =>
+          session.tableNumber === Number(tableFromQuery) &&
+          session.status !== "Closed"
+      )
+      if (existingSession) {
+        const sessionCart = localStorage.getItem(`teashore-cart-${existingSession.id}`)
+        return sessionCart ? JSON.parse(sessionCart) : []
+      }
+    }
+    // Default: load global cart for delivery mode
     const savedCart = localStorage.getItem("teashore-cart")
     return savedCart ? JSON.parse(savedCart) : []
   })
@@ -127,8 +143,14 @@ function App() {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem("teashore-cart", JSON.stringify(cartItems))
-  }, [cartItems])
+    // In cafe QR mode, save cart per table session
+    if (isCafeQrOrderingMode && currentTableSessionId) {
+      localStorage.setItem(`teashore-cart-${currentTableSessionId}`, JSON.stringify(cartItems))
+    } else {
+      // In delivery mode, save to global cart
+      localStorage.setItem("teashore-cart", JSON.stringify(cartItems))
+    }
+  }, [cartItems, isCafeQrOrderingMode, currentTableSessionId])
 
   useEffect(() => {
     localStorage.setItem("teashore-orders", JSON.stringify(orders))
@@ -167,11 +189,20 @@ function App() {
     if (existingSession) {
       setCurrentTableSessionId(existingSession.id)
       
+      // Load existing session's cart items
+      const sessionCart = localStorage.getItem(`teashore-cart-${existingSession.id}`)
+      if (sessionCart) {
+        setCartItems(JSON.parse(sessionCart))
+      }
+      
       // Show popup once per session instance
       if (lastShownPopupSessionRef.current !== existingSession.id) {
         setShowActiveTableSessionPopup(true)
         lastShownPopupSessionRef.current = existingSession.id
       }
+      
+      // In QR mode with existing session, show checkout to continue adding items
+      setShowCheckout(true)
       return
     }
 
@@ -188,6 +219,10 @@ function App() {
     setCurrentTableSessionId(newSessionId)
     setShowActiveTableSessionPopup(false)
     lastShownPopupSessionRef.current = null
+    // New session starts at home, not checkout
+    setShowCheckout(false)
+    // Clear any old cart when starting fresh
+    setCartItems([])
   }, [isCafeQrOrderingMode, detectedTableNumber, tableSessions])
 
   // ===== PRICE CALCULATIONS =====
@@ -362,8 +397,13 @@ function App() {
 
     setShowPayment(false)
     setShowCheckout(false)
-    setCartItems([])
+    
+    // In QR cafe mode, keep items for running bill; in delivery mode, clear cart
+    if (!isCafeQrOrderingMode) {
+      setCartItems([])
+    }
 
+    // Clear form fields
     setName("")
     setPhone("")
     setAddress("")
@@ -373,7 +413,10 @@ function App() {
     setAppliedCoupon("")
     setCouponMessage("")
 
-    setShowOrders(true)
+    // Only show orders for delivery mode
+    if (!isCafeQrOrderingMode) {
+      setShowOrders(true)
+    }
   }
 
   // ===== RESERVATION FUNCTIONS =====
@@ -578,6 +621,9 @@ function App() {
   }
 
   const handleCloseTable = (sessionId) => {
+    // Clear the session's cart from localStorage
+    localStorage.removeItem(`teashore-cart-${sessionId}`)
+    
     setTableSessions((prevSessions) =>
       prevSessions.map((session) =>
         session.id === sessionId
@@ -585,6 +631,19 @@ function App() {
           : session
       )
     )
+    
+    // Reset popup tracking for this session to allow fresh popup on next QR scan
+    if (lastShownPopupSessionRef.current === sessionId) {
+      lastShownPopupSessionRef.current = null
+    }
+    
+    // If this is the current table session, reset it and clear its cart
+    if (currentTableSessionId === sessionId) {
+      setCurrentTableSessionId(null)
+      setShowActiveTableSessionPopup(false)
+      setShowCheckout(false)
+      setCartItems([])
+    }
   }
 
   // ===== NAVIGATION FUNCTIONS =====
@@ -616,6 +675,12 @@ function App() {
 
   const handleContinueTableSession = () => {
     setShowActiveTableSessionPopup(false)
+    // Ensure checkout is visible and scrolled into view
+    setTimeout(() => {
+      if (checkoutRef.current) {
+        checkoutRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 100)
   }
 
   // ===== RENDER =====
