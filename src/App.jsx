@@ -12,7 +12,7 @@ import Admin from "./pages/Admin"
 function App() {
   // ===== CART STATE =====
   const [cartItems, setCartItems] = useState(() => {
-    // For cafe QR mode, check if there's a table-specific cart saved
+    // For cafe QR mode, load cart only if a table session already exists
     const tableFromQuery = new URLSearchParams(window.location.search).get("table")
     if (tableFromQuery) {
       const savedSessions = localStorage.getItem("teashore-table-sessions")
@@ -26,6 +26,7 @@ function App() {
         const sessionCart = localStorage.getItem(`teashore-cart-${existingSession.id}`)
         return sessionCart ? JSON.parse(sessionCart) : []
       }
+      return []
     }
     // Default: load global cart for delivery mode
     const savedCart = localStorage.getItem("teashore-cart")
@@ -143,13 +144,15 @@ function App() {
   }, [])
 
   useEffect(() => {
-    // In cafe QR mode, save cart per table session
-    if (isCafeQrOrderingMode && currentTableSessionId) {
-      localStorage.setItem(`teashore-cart-${currentTableSessionId}`, JSON.stringify(cartItems))
-    } else {
-      // In delivery mode, save to global cart
-      localStorage.setItem("teashore-cart", JSON.stringify(cartItems))
+    if (isCafeQrOrderingMode) {
+      if (currentTableSessionId) {
+        localStorage.setItem(`teashore-cart-${currentTableSessionId}`, JSON.stringify(cartItems))
+      }
+      return
     }
+
+    // In delivery mode, save to global cart
+    localStorage.setItem("teashore-cart", JSON.stringify(cartItems))
   }, [cartItems, isCafeQrOrderingMode, currentTableSessionId])
 
   useEffect(() => {
@@ -188,30 +191,38 @@ function App() {
 
     if (existingSession) {
       setCurrentTableSessionId(existingSession.id)
-      
-      // Load existing session's cart items
+
+      // Load existing session's cart (if any) and restore same running bill
       const sessionCart = localStorage.getItem(`teashore-cart-${existingSession.id}`)
       if (sessionCart) {
         setCartItems(JSON.parse(sessionCart))
+      } else {
+        setCartItems([])
       }
-      
-      // Show popup once per session instance
-      if (lastShownPopupSessionRef.current !== existingSession.id) {
-        setShowActiveTableSessionPopup(true)
-        lastShownPopupSessionRef.current = existingSession.id
+
+      if (existingSession.status === "Active") {
+        // Show popup once per active session instance
+        if (lastShownPopupSessionRef.current !== existingSession.id) {
+          setShowActiveTableSessionPopup(true)
+          lastShownPopupSessionRef.current = existingSession.id
+        }
+
+        // In QR mode with active session, show checkout to continue adding items
+        setShowCheckout(true)
+      } else {
+        // Pending table session has no active bill yet
+        setShowActiveTableSessionPopup(false)
+        setShowCheckout(false)
       }
-      
-      // In QR mode with existing session, show checkout to continue adding items
-      setShowCheckout(true)
       return
     }
 
-    // No existing session, create a new one
+    // No existing session, create a new pending one until first order is placed
     const newSessionId = "TBL" + Math.floor(10000 + Math.random() * 90000)
     const newSession = {
       id: newSessionId,
       tableNumber: detectedTableNumber,
-      status: "Active",
+      status: "Pending",
       createdAt: Date.now(),
       closedAt: null,
     }
@@ -219,9 +230,8 @@ function App() {
     setCurrentTableSessionId(newSessionId)
     setShowActiveTableSessionPopup(false)
     lastShownPopupSessionRef.current = null
-    // New session starts at home, not checkout
+    // New session starts empty and at home
     setShowCheckout(false)
-    // Clear any old cart when starting fresh
     setCartItems([])
   }, [isCafeQrOrderingMode, detectedTableNumber, tableSessions])
 
@@ -313,17 +323,38 @@ function App() {
 
   // ===== ORDER CREATION =====
   const createOrder = (paidStatus) => {
+    let orderSessionId = currentTableSessionId
+
     if (isCafeQrOrderingMode) {
-      if (!currentTableSessionId) {
-        alert("Table session unavailable. Please refresh and scan QR again.")
-        return
-      }
+      if (!orderSessionId) {
+        // Create a new session when first cafe QR order is placed
+        orderSessionId = "TBL" + Math.floor(10000 + Math.random() * 90000)
+        const newSession = {
+          id: orderSessionId,
+          tableNumber: detectedTableNumber,
+          status: "Active",
+          createdAt: Date.now(),
+          closedAt: null,
+        }
+        setTableSessions((prev) => [newSession, ...prev])
+        setCurrentTableSessionId(orderSessionId)
+      } else {
+        const matchedSession = tableSessions.find((session) => session.id === orderSessionId)
+        if (!matchedSession || matchedSession.status === "Closed") {
+          alert("This table session is closed. Please scan QR again for a new session.")
+          return
+        }
 
-      const matchedSession = tableSessions.find((session) => session.id === currentTableSessionId)
-
-      if (!matchedSession || matchedSession.status === "Closed") {
-        alert("This table session is closed. Please scan QR again for a new session.")
-        return
+        if (matchedSession.status !== "Active") {
+          // Activate pending session on first order
+          setTableSessions((prevSessions) =>
+            prevSessions.map((session) =>
+              session.id === orderSessionId
+                ? { ...session, status: "Active" }
+                : session
+            )
+          )
+        }
       }
     }
 
@@ -342,17 +373,17 @@ function App() {
       city,
       pincode,
       tableNumber: isCafeQrOrderingMode ? detectedTableNumber : null,
-      tableSessionId: isCafeQrOrderingMode ? currentTableSessionId : null,
+      tableSessionId: isCafeQrOrderingMode ? orderSessionId : null,
       status: "Preparing ☕",
       time: new Date().toLocaleTimeString(),
     }
 
     setOrders((prev) => [newOrder, ...prev])
 
-    if (isCafeQrOrderingMode && currentTableSessionId) {
+    if (isCafeQrOrderingMode && orderSessionId) {
       setTableSessions((prevSessions) =>
         prevSessions.map((session) => {
-          if (session.id !== currentTableSessionId) return session
+          if (session.id !== orderSessionId) return session
           if (session.status === "Closed") return session
           return {
             ...session,
@@ -675,6 +706,7 @@ function App() {
 
   const handleContinueTableSession = () => {
     setShowActiveTableSessionPopup(false)
+    setShowCheckout(true)
     // Ensure checkout is visible and scrolled into view
     setTimeout(() => {
       if (checkoutRef.current) {
