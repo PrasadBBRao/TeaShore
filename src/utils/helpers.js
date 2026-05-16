@@ -71,6 +71,20 @@ export const products = [
       "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?q=80&w=800",
   },
   {
+    name: "Green Tea 🍵",
+    category: "Tea",
+    price: 50,
+    image:
+      "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=800",
+  },
+  {
+    name: "Ginger Tea 🫖",
+    category: "Tea",
+    price: 45,
+    image:
+      "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?q=80&w=800",
+  },
+  {
     name: "Cold Coffee 🧋",
     category: "Drinks",
     price: 90,
@@ -78,11 +92,39 @@ export const products = [
       "https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=800",
   },
   {
+    name: "Iced Lemonade 🍋",
+    category: "Drinks",
+    price: 80,
+    image:
+      "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=800",
+  },
+  {
+    name: "Mango Smoothie 🥭",
+    category: "Drinks",
+    price: 100,
+    image:
+      "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?q=80&w=800",
+  },
+  {
     name: "French Fries 🍟",
     category: "Snacks",
     price: 120,
     image:
       "https://images.unsplash.com/photo-1576107232684-1279f390859f?q=80&w=800",
+  },
+  {
+    name: "Samosa 🥟",
+    category: "Snacks",
+    price: 60,
+    image:
+      "https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=800",
+  },
+  {
+    name: "Club Sandwich 🥪",
+    category: "Snacks",
+    price: 80,
+    image:
+      "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800",
   },
 ]
 
