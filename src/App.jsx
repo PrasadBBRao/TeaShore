@@ -591,24 +591,6 @@ function App() {
       return
     }
 
-    const totalSeatsForToday = reservations.filter(
-      (reservation) => reservation.date === reservationDate
-    ).length
-    if (totalSeatsForToday >= 12) {
-      setReservationMessage("All Reservation Seats Filled for Today ⛔")
-      return
-    }
-
-    const slotReservations = reservations.filter(
-      (reservation) =>
-        reservation.date === reservationDate &&
-        reservation.time === reservationTime
-    ).length
-    if (slotReservations >= 6) {
-      setReservationMessage("Reservations Full for This Time ⛔")
-      return
-    }
-
     const getMinutesFromTime = (timeValue) => {
       const [hours, minutes] = timeValue.split(":").map(Number)
       return hours * 60 + minutes
@@ -624,7 +606,11 @@ function App() {
       return
     }
 
-    const hasConflict = reservations.some((reservation) => {
+    // Calculate tables required for new reservation
+    const newReservationTables = peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1
+
+    // Calculate total tables occupied by overlapping reservations
+    const overlappingReservations = reservations.filter((reservation) => {
       if (reservation.date !== reservationDate) {
         return false
       }
@@ -633,8 +619,14 @@ function App() {
       return newStart < existingEnd && newEnd > existingStart
     })
 
-    if (hasConflict) {
-      setReservationMessage("Table Already Reserved for This Time ⛔")
+    const occupiedTables = overlappingReservations.reduce(
+      (total, reservation) => total + (reservation.tablesAllocated ?? 1),
+      0
+    )
+
+    // Check if total tables would exceed capacity (8 tables)
+    if (occupiedTables + newReservationTables > 8) {
+      setReservationMessage("Reservations Full During This Time ⛔ Please Choose Another Time")
       return
     }
 
