@@ -24,6 +24,7 @@ function Reservation({
   onBookTable,
   onCancelReservation,
   reservationMessage,
+  tableAvailabilityMessage,
 }) {
   const handleReservationTimeChange = (value) => {
     const isDeleting = value.length < reservationTime.length
@@ -191,6 +192,22 @@ function Reservation({
         >
           Book Table
         </button>
+
+        {tableAvailabilityMessage && (
+          <p
+            style={{
+              marginTop: "12px",
+              marginBottom: 0,
+              color: tableAvailabilityMessage.includes("No Tables")
+                ? "#ff8f8f"
+                : "#8be28b",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            {tableAvailabilityMessage}
+          </p>
+        )}
 
         {reservationMessage && (
           <p

@@ -98,6 +98,7 @@ function App() {
   const [reservationTime, setReservationTime] = useState("")
   const [reservationDuration, setReservationDuration] = useState("")
   const [reservationMessage, setReservationMessage] = useState("")
+  const [tableAvailabilityMessage, setTableAvailabilityMessage] = useState("")
 
   // ===== TABLE SESSION STATE =====
   const [currentTableSessionId, setCurrentTableSessionId] = useState(null)
@@ -181,6 +182,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("teashore-reservations", JSON.stringify(reservations))
   }, [reservations])
+
+  useEffect(() => {
+    calculateTableAvailability()
+  }, [reservationDate, reservationTime, reservationPeople, reservationDuration, reservations])
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -676,6 +681,57 @@ function App() {
     setReservationMessage("Reservation Cancelled Successfully")
   }
 
+  const calculateTableAvailability = () => {
+    const peopleCount = Number(reservationPeople)
+    const durationHours = Number(reservationDuration)
+
+    // Reset message if required fields are missing
+    if (!reservationDate || !reservationTime || !peopleCount || !durationHours) {
+      setTableAvailabilityMessage("")
+      return
+    }
+
+    // Validate time format
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(reservationTime)) {
+      setTableAvailabilityMessage("")
+      return
+    }
+
+    const getMinutesFromTime = (timeValue) => {
+      const [hours, minutes] = timeValue.split(":").map(Number)
+      return hours * 60 + minutes
+    }
+
+    const newStart = getMinutesFromTime(reservationTime)
+    const newEnd = newStart + durationHours * 60
+
+    // Calculate tables required for new reservation
+    const newReservationTables = peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1
+
+    // Calculate total tables occupied by overlapping reservations
+    const overlappingReservations = reservations.filter((reservation) => {
+      if (reservation.date !== reservationDate) {
+        return false
+      }
+      const existingStart = getMinutesFromTime(reservation.time)
+      const existingEnd = existingStart + reservation.duration * 60
+      return newStart < existingEnd && newEnd > existingStart
+    })
+
+    const occupiedTables = overlappingReservations.reduce(
+      (total, reservation) => total + (reservation.tablesAllocated ?? 1),
+      0
+    )
+
+    const remainingTables = 8 - occupiedTables
+
+    if (remainingTables >= newReservationTables) {
+      setTableAvailabilityMessage(`${remainingTables} Tables Remaining for This Time ☕`)
+    } else {
+      setTableAvailabilityMessage("No Tables Available During This Time ⛔")
+    }
+  }
+
   // ===== ADMIN FUNCTIONS =====
   const handleLogoClick = () => {
     const now = Date.now()
@@ -1067,6 +1123,7 @@ function App() {
         onBookTable={handleBookTable}
         onCancelReservation={handleCancelReservation}
         reservationMessage={reservationMessage}
+        tableAvailabilityMessage={tableAvailabilityMessage}
       />
 
       {cartItems.length > 0 && !showCheckout && !showOrders && !showAdmin && (
