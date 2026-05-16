@@ -223,14 +223,23 @@ function App() {
       }
 
       if (existingSession.status === "Active") {
-        // Show popup on page refresh/re-entry
-        const sessionStorageKey = `teashore-popup-shown-${existingSession.id}`
-        const alreadyShownInThisSession = sessionStorage.getItem(sessionStorageKey)
-        
-        if (!alreadyShownInThisSession && lastShownPopupSessionRef.current !== existingSession.id) {
-          setShowActiveTableSessionPopup(true)
-          lastShownPopupSessionRef.current = existingSession.id
-          sessionStorage.setItem(sessionStorageKey, "true")
+        // Check if this session has any orders placed
+        const sessionHasOrders = orders.some(
+          (order) => order.tableSessionId === existingSession.id
+        )
+
+        // Show popup on page refresh/re-entry ONLY if session has orders
+        if (sessionHasOrders) {
+          const sessionStorageKey = `teashore-popup-shown-${existingSession.id}`
+          const alreadyShownInThisSession = sessionStorage.getItem(sessionStorageKey)
+          
+          if (!alreadyShownInThisSession && lastShownPopupSessionRef.current !== existingSession.id) {
+            setShowActiveTableSessionPopup(true)
+            lastShownPopupSessionRef.current = existingSession.id
+            sessionStorage.setItem(sessionStorageKey, "true")
+          }
+        } else {
+          setShowActiveTableSessionPopup(false)
         }
 
         // In QR mode with active session, show checkout to continue adding items
@@ -749,6 +758,14 @@ function App() {
     
     setShowActiveTableSessionPopup(false)
     setShowCheckout(true)
+    
+    // Show toast notification for continuing session
+    toast.warn("⚠️ Continuing Existing Table Session", {
+      position: "top-right",
+      autoClose: 3000,
+      theme: "dark",
+    })
+    
     // Ensure checkout is visible and scrolled into view
     setTimeout(() => {
       if (checkoutRef.current) {
