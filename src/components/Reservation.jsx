@@ -81,6 +81,15 @@ function Reservation({
     )
   }
 
+  const calculateTablesAllocated = (peopleCount) => {
+    const count = Number(peopleCount)
+    if (Number.isNaN(count) || count < 1) return 1
+    return count <= 7 ? 1 : Math.ceil((count - 7) / 6) + 1
+  }
+
+  const tablesAllocated = calculateTablesAllocated(reservationPeople)
+  const reservationAdvance = tablesAllocated * 100
+
   if (!show) return null
 
   const isMobile = window.innerWidth < 768
@@ -186,11 +195,26 @@ function Reservation({
           style={inputStyle}
         />
 
+        {reservationPeople && (
+          <p
+            style={{
+              marginTop: "12px",
+              marginBottom: "8px",
+              color: "#d2b48c",
+              fontWeight: "bold",
+              textAlign: "center",
+              fontSize: "16px",
+            }}
+          >
+            Reservation Advance: ₹{reservationAdvance}
+          </p>
+        )}
+
         <button
           onClick={onBookTable}
           style={mainButton}
         >
-          Book Table
+          Confirm & Pay Reservation
         </button>
 
         {tableAvailabilityMessage && (
