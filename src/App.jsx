@@ -60,6 +60,7 @@ function App() {
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false)
   const [showReservations, setShowReservations] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false)
 
   // ===== CHECKOUT FORM STATE =====
   const [name, setName] = useState("")
@@ -500,6 +501,9 @@ function App() {
     setShowPayment(false)
     setShowCheckout(false)
     
+    // Show order success screen
+    setShowOrderSuccess(true)
+    
     // In QR cafe mode, keep items for running bill; in delivery mode, clear cart
     if (!isCafeQrOrderingMode) {
       setCartItems([])
@@ -836,6 +840,17 @@ function App() {
     }, 100)
   }
 
+  const handleContinueOrdering = () => {
+    setShowOrderSuccess(false)
+    setShowCheckout(false)
+    // Scroll to top/menu section
+    setTimeout(() => {
+      if (homeRef.current) {
+        homeRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 100)
+  }
+
   // ===== RENDER =====
   return (
     <div
@@ -891,6 +906,58 @@ function App() {
           selectedOrder={selectedOrder}
           setSelectedOrder={setSelectedOrder}
         />
+      ) : showOrderSuccess ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "60vh",
+            padding: "40px 20px",
+            textAlign: "center",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "clamp(32px, 6vw, 48px)",
+              marginBottom: "20px",
+            }}
+          >
+            🎉 Order Placed Successfully
+          </h1>
+          <p
+            style={{
+              color: "#d2b48c",
+              fontSize: "clamp(18px, 4vw, 24px)",
+              marginBottom: "40px",
+            }}
+          >
+            Your order is being prepared ☕
+          </p>
+          <button
+            onClick={handleContinueOrdering}
+            style={{
+              padding: "16px 32px",
+              backgroundColor: "#c68b59",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: "18px",
+              transition: "transform 0.2s",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = "scale(1.05)"
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = "scale(1)"
+            }}
+          >
+            Continue Ordering
+          </button>
+        </div>
       ) : !showCheckout ? (
         <Home
           homeRef={homeRef}
