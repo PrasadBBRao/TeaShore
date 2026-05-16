@@ -189,54 +189,56 @@ function Checkout({
         >
           <h2>Price Details</h2>
 
-          <div
-            style={{
-              marginTop: "18px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-          >
-            <input
-              type="text"
-              placeholder="Enter coupon code"
-              value={couponCode}
-              onChange={(e) =>
-                setCouponCode(e.target.value)
-              }
+          {!isCafeQrOrderingMode && (
+            <div
               style={{
-                ...inputStyle,
-                marginTop: 0,
-                backgroundColor: "#24160f",
-                border: "1px solid #4a3325",
-                color: "white",
-              }}
-            />
-
-            <button
-              onClick={applyCoupon}
-              style={{
-                ...mainButton,
-                marginTop: 0,
+                marginTop: "18px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
               }}
             >
-              Apply Coupon
-            </button>
-
-            {couponMessage && (
-              <p
+              <input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) =>
+                  setCouponCode(e.target.value)
+                }
                 style={{
-                  margin: 0,
-                  color: appliedCoupon
-                    ? "#8be28b"
-                    : "#ff8f8f",
-                  fontWeight: "bold",
+                  ...inputStyle,
+                  marginTop: 0,
+                  backgroundColor: "#24160f",
+                  border: "1px solid #4a3325",
+                  color: "white",
+                }}
+              />
+
+              <button
+                onClick={applyCoupon}
+                style={{
+                  ...mainButton,
+                  marginTop: 0,
                 }}
               >
-                {couponMessage}
-              </p>
-            )}
-          </div>
+                Apply Coupon
+              </button>
+
+              {couponMessage && (
+                <p
+                  style={{
+                    margin: 0,
+                    color: appliedCoupon
+                      ? "#8be28b"
+                      : "#ff8f8f",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {couponMessage}
+                </p>
+              )}
+            </div>
+          )}
 
           <div style={priceRow}>
             <p>Subtotal</p>
