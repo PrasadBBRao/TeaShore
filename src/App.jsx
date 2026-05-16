@@ -135,6 +135,20 @@ function App() {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
+  // Clear sessionStorage on page load to allow popup to show on refresh
+  useEffect(() => {
+    if (isCafeQrOrderingMode && detectedTableNumber !== null) {
+      const existingSession = tableSessions.find(
+        (session) =>
+          session.tableNumber === detectedTableNumber &&
+          session.status !== "Closed"
+      )
+      if (existingSession) {
+        sessionStorage.removeItem(`teashore-popup-shown-${existingSession.id}`)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const handleWindowScroll = () => {
       setShowScrollTop(window.scrollY > 280)
@@ -200,8 +214,16 @@ function App() {
         setCartItems([])
       }
 
+      // Restore customer info if exists in session
+      if (existingSession.customerName) {
+        setName(existingSession.customerName)
+      }
+      if (existingSession.customerPhone) {
+        setPhone(existingSession.customerPhone)
+      }
+
       if (existingSession.status === "Active") {
-        // Only show popup on fresh page load/re-entry, not during same session
+        // Show popup on page refresh/re-entry
         const sessionStorageKey = `teashore-popup-shown-${existingSession.id}`
         const alreadyShownInThisSession = sessionStorage.getItem(sessionStorageKey)
         
@@ -337,6 +359,8 @@ function App() {
           id: orderSessionId,
           tableNumber: detectedTableNumber,
           status: "Active",
+          customerName: name,
+          customerPhone: phone,
           createdAt: Date.now(),
           closedAt: null,
         }
@@ -350,11 +374,20 @@ function App() {
         }
 
         if (matchedSession.status !== "Active") {
-          // Activate pending session on first order
+          // Activate pending session on first order and store customer info
           setTableSessions((prevSessions) =>
             prevSessions.map((session) =>
               session.id === orderSessionId
-                ? { ...session, status: "Active" }
+                ? { ...session, status: "Active", customerName: name, customerPhone: phone }
+                : session
+            )
+          )
+        } else {
+          // Update customer info if changed during continued session
+          setTableSessions((prevSessions) =>
+            prevSessions.map((session) =>
+              session.id === orderSessionId
+                ? { ...session, customerName: name, customerPhone: phone }
                 : session
             )
           )
