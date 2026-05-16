@@ -201,10 +201,14 @@ function App() {
       }
 
       if (existingSession.status === "Active") {
-        // Show popup once per active session instance
-        if (lastShownPopupSessionRef.current !== existingSession.id) {
+        // Only show popup on fresh page load/re-entry, not during same session
+        const sessionStorageKey = `teashore-popup-shown-${existingSession.id}`
+        const alreadyShownInThisSession = sessionStorage.getItem(sessionStorageKey)
+        
+        if (!alreadyShownInThisSession && lastShownPopupSessionRef.current !== existingSession.id) {
           setShowActiveTableSessionPopup(true)
           lastShownPopupSessionRef.current = existingSession.id
+          sessionStorage.setItem(sessionStorageKey, "true")
         }
 
         // In QR mode with active session, show checkout to continue adding items
@@ -574,7 +578,7 @@ function App() {
       date: reservationDate,
       time: reservationTime,
       duration: durationHours,
-      tablesAllocated: peopleCount >= 8 ? 2 : 1,
+      tablesAllocated: peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1,
       createdAt: Date.now(),
     }
 
