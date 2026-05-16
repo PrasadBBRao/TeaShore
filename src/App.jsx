@@ -655,12 +655,9 @@ function App() {
     // Clear the session's cart from localStorage
     localStorage.removeItem(`teashore-cart-${sessionId}`)
     
+    // Fully remove the session from the array instead of just marking as Closed
     setTableSessions((prevSessions) =>
-      prevSessions.map((session) =>
-        session.id === sessionId
-          ? { ...session, status: "Closed", closedAt: Date.now() }
-          : session
-      )
+      prevSessions.filter((session) => session.id !== sessionId)
     )
     
     // Reset popup tracking for this session to allow fresh popup on next QR scan
@@ -705,6 +702,14 @@ function App() {
   }
 
   const handleContinueTableSession = () => {
+    // Explicitly restore the cart from the current session
+    if (currentTableSessionId) {
+      const sessionCart = localStorage.getItem(`teashore-cart-${currentTableSessionId}`)
+      if (sessionCart) {
+        setCartItems(JSON.parse(sessionCart))
+      }
+    }
+    
     setShowActiveTableSessionPopup(false)
     setShowCheckout(true)
     // Ensure checkout is visible and scrolled into view
