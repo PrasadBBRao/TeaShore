@@ -229,8 +229,8 @@ function App() {
           (order) => order.tableSessionId === existingSession.id
         )
 
-        // Show popup on page refresh/re-entry ONLY if session has orders
-        if (sessionHasOrders) {
+        // Show popup on page refresh/re-entry ONLY if session has orders AND not showing order success screen
+        if (sessionHasOrders && !showOrderSuccess) {
           const sessionStorageKey = `teashore-popup-shown-${existingSession.id}`
           const alreadyShownInThisSession = sessionStorage.getItem(sessionStorageKey)
           
@@ -243,8 +243,10 @@ function App() {
           setShowActiveTableSessionPopup(false)
         }
 
-        // In QR mode with active session, show checkout to continue adding items
-        setShowCheckout(true)
+        // In QR mode with active session, show checkout to continue adding items (unless showing success screen)
+        if (!showOrderSuccess) {
+          setShowCheckout(true)
+        }
       } else {
         // Pending table session has no active bill yet
         setShowActiveTableSessionPopup(false)
@@ -518,11 +520,6 @@ function App() {
     setCouponCode("")
     setAppliedCoupon("")
     setCouponMessage("")
-
-    // Only show orders for delivery mode
-    if (!isCafeQrOrderingMode) {
-      setShowOrders(true)
-    }
   }
 
   // ===== RESERVATION FUNCTIONS =====
