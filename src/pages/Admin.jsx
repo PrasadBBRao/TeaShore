@@ -1,4 +1,5 @@
 import { mainButton, overlayStyle, popupStyle, adminCardStyle, adminCardTitleStyle, adminCardValueStyle } from "../utils/styles"
+import { toast } from "react-toastify"
 
 function Admin({
   show,
@@ -16,6 +17,7 @@ function Admin({
   onLogin,
   adminLoginMessage,
   onCloseLoginModal,
+  onMarkPaymentPaid,
 }) {
   if (!show) return null
   
@@ -443,6 +445,18 @@ function Admin({
                     <strong>Session ID:</strong>{" "}
                     {session.id}
                   </p>
+                  {session.status === "Active" && onMarkPaymentPaid && (
+                    <button
+                      onClick={() => onMarkPaymentPaid(session.id)}
+                      style={{
+                        ...mainButton,
+                        backgroundColor: "#2e7d32",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      Mark as Paid
+                    </button>
+                  )}
                   {session.status !== "Closed" && (
                     <button
                       onClick={() =>

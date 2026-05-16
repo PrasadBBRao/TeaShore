@@ -295,6 +295,22 @@ function App() {
       setCartItems([...cartItems, { ...item, quantity: 1 }])
     }
 
+    // Show different toast for QR cafe mode during active table session
+    if (isCafeQrOrderingMode && currentTableSessionId) {
+      const existingSession = tableSessions.find(
+        (session) => session.id === currentTableSessionId && session.status === "Active"
+      )
+      if (existingSession) {
+        toast.success("☕ Added to Running Table Bill", {
+          position: "top-right",
+          autoClose: 2000,
+          theme: "dark",
+        })
+        setLastAddedProduct(item.name)
+        return
+      }
+    }
+
     toast.success(`${item.name} added to cart ☕`, {
       position: "top-right",
       autoClose: 2000,
@@ -425,6 +441,15 @@ function App() {
     }
 
     setOrders((prev) => [newOrder, ...prev])
+
+    // Show toast for QR cafe order placement
+    if (isCafeQrOrderingMode) {
+      toast.success(`🎉 Table ${detectedTableNumber} Order Placed Successfully`, {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      })
+    }
 
     if (isCafeQrOrderingMode && orderSessionId) {
       setTableSessions((prevSessions) =>
@@ -698,6 +723,10 @@ function App() {
   }
 
   const handleCloseTable = (sessionId) => {
+    // Get table number before closing for toast message
+    const sessionToClose = tableSessions.find((session) => session.id === sessionId)
+    const tableNumber = sessionToClose?.tableNumber
+
     // Clear the session's cart from localStorage
     localStorage.removeItem(`teashore-cart-${sessionId}`)
     
@@ -717,6 +746,39 @@ function App() {
       setShowActiveTableSessionPopup(false)
       setShowCheckout(false)
       setCartItems([])
+    }
+
+    // Show toast for table closure
+    if (tableNumber) {
+      toast.success(`✅ Table ${tableNumber} Closed Successfully`, {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      })
+    }
+  }
+
+  const handleMarkPaymentPaid = (sessionId) => {
+    // Get table number for toast message
+    const sessionToMark = tableSessions.find((session) => session.id === sessionId)
+    const tableNumber = sessionToMark?.tableNumber
+
+    // Update session status to Paid
+    setTableSessions((prevSessions) =>
+      prevSessions.map((session) =>
+        session.id === sessionId
+          ? { ...session, status: "Paid" }
+          : session
+      )
+    )
+
+    // Show toast for payment marked as paid
+    if (tableNumber) {
+      toast.success(`💰 Payment Marked as Paid`, {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      })
     }
   }
 
@@ -810,6 +872,7 @@ function App() {
             setShowAdmin(false)
           }}
           onCloseTable={handleCloseTable}
+          onMarkPaymentPaid={handleMarkPaymentPaid}
           showLoginModal={false}
           adminUsername={adminUsername}
           setAdminUsername={setAdminUsername}
