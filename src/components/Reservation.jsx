@@ -1,4 +1,4 @@
-import { inputStyle, mainButton, overlayStyle, popupStyle } from "../utils/styles"
+import { inputStyle, mainButton, overlayStyle, popupStyle, confirmButton } from "../utils/styles"
 import {
   getMinutesFromTime,
   getTodayDate,
@@ -25,6 +25,18 @@ function Reservation({
   onCancelReservation,
   reservationMessage,
   tableAvailabilityMessage,
+  showReservationPayment,
+  reservationPaymentMethod,
+  setReservationPaymentMethod,
+  onConfirmReservationPayment,
+  pendingReservationData,
+  onCancelReservationPayment,
+  showCancelReasonModal,
+  selectedCancelReason,
+  setSelectedCancelReason,
+  onConfirmCancelReservation,
+  onModifyReservation,
+  onCancelReasonModal,
 }) {
   const handleReservationTimeChange = (value) => {
     const isDeleting = value.length < reservationTime.length
@@ -349,6 +361,236 @@ function Reservation({
           Close
         </button>
       </div>
+
+      {/* RESERVATION PAYMENT POPUP */}
+      {showReservationPayment && pendingReservationData && (
+        <div style={overlayStyle}>
+          <div style={popupStyle}>
+            <h2>Select Payment Method</h2>
+
+            <p
+              style={{
+                marginTop: "15px",
+                color: "#d2b48c",
+                textAlign: "center",
+              }}
+            >
+              Reservation Advance: ₹{pendingReservationData.advanceAmount}
+            </p>
+
+            <div
+              onClick={() =>
+                setReservationPaymentMethod("UPI")
+              }
+              style={{
+                backgroundColor: "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+              }}
+            >
+              📱 UPI Payment
+            </div>
+
+            <div
+              onClick={() =>
+                setReservationPaymentMethod("COD")
+              }
+              style={{
+                backgroundColor: "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+              }}
+            >
+              💵 Pay at Cafe
+            </div>
+
+            {reservationPaymentMethod === "UPI" && (
+              <div>
+                <img
+                  src={`https://quickchart.io/qr?text=${encodeURIComponent(
+                    `upi://pay?pa=prasadrao02012004-1@oksbi&pn=TeaShore&am=${pendingReservationData.advanceAmount}&cu=INR`
+                  )}&size=250`}
+                  alt="QR"
+                  style={{
+                    marginTop: "20px",
+                    borderRadius: "12px",
+                    backgroundColor: "white",
+                    padding: "10px",
+                    width: "100%",
+                    maxWidth: "250px",
+                  }}
+                />
+
+                <button
+                  onClick={() =>
+                    onConfirmReservationPayment("Paid ✅")
+                  }
+                  style={confirmButton}
+                >
+                  Confirm Payment
+                </button>
+              </div>
+            )}
+
+            {reservationPaymentMethod === "COD" && (
+              <div>
+                <p
+                  style={{
+                    marginTop: "20px",
+                  }}
+                >
+                  Pay advance amount at cafe counter 🍽️
+                </p>
+
+                <button
+                  onClick={() =>
+                    onConfirmReservationPayment("Pay at Cafe")
+                  }
+                  style={confirmButton}
+                >
+                  Confirm Reservation
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={onCancelReservationPayment}
+              style={{
+                marginTop: "20px",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#d2b48c",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CANCELLATION REASON MODAL */}
+      {showCancelReasonModal && (
+        <div style={overlayStyle}>
+          <div style={popupStyle}>
+            <h2 style={{ textAlign: "center" }}>
+              Why are you cancelling?
+            </h2>
+
+            <div
+              onClick={() => setSelectedCancelReason("Change of Plans")}
+              style={{
+                backgroundColor: selectedCancelReason === "Change of Plans" ? "#4a3325" : "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+                border: selectedCancelReason === "Change of Plans" ? "2px solid #d2b48c" : "none",
+              }}
+            >
+              Change of Plans
+            </div>
+
+            <div
+              onClick={() => setSelectedCancelReason("Running Late")}
+              style={{
+                backgroundColor: selectedCancelReason === "Running Late" ? "#4a3325" : "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+                border: selectedCancelReason === "Running Late" ? "2px solid #d2b48c" : "none",
+              }}
+            >
+              Running Late
+            </div>
+
+            <div
+              onClick={() => setSelectedCancelReason("Found Another Place")}
+              style={{
+                backgroundColor: selectedCancelReason === "Found Another Place" ? "#4a3325" : "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+                border: selectedCancelReason === "Found Another Place" ? "2px solid #d2b48c" : "none",
+              }}
+            >
+              Found Another Place
+            </div>
+
+            <div
+              onClick={() => setSelectedCancelReason("Wrong Booking Details")}
+              style={{
+                backgroundColor: selectedCancelReason === "Wrong Booking Details" ? "#4a3325" : "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+                border: selectedCancelReason === "Wrong Booking Details" ? "2px solid #d2b48c" : "none",
+              }}
+            >
+              Wrong Booking Details
+            </div>
+
+            <div
+              onClick={() => setSelectedCancelReason("Emergency / Personal Reason")}
+              style={{
+                backgroundColor: selectedCancelReason === "Emergency / Personal Reason" ? "#4a3325" : "#3a261a",
+                padding: "15px",
+                borderRadius: "12px",
+                marginTop: "15px",
+                cursor: "pointer",
+                border: selectedCancelReason === "Emergency / Personal Reason" ? "2px solid #d2b48c" : "none",
+              }}
+            >
+              Emergency / Personal Reason
+            </div>
+
+            {selectedCancelReason === "Wrong Booking Details" ? (
+              <button
+                onClick={onModifyReservation}
+                style={{
+                  ...mainButton,
+                  marginTop: "20px",
+                }}
+              >
+                Modify Reservation
+              </button>
+            ) : (
+              <button
+                onClick={onConfirmCancelReservation}
+                disabled={!selectedCancelReason}
+                style={{
+                  ...mainButton,
+                  marginTop: "20px",
+                  opacity: selectedCancelReason ? 1 : 0.5,
+                  cursor: selectedCancelReason ? "pointer" : "not-allowed",
+                }}
+              >
+                Cancel Reservation
+              </button>
+            )}
+
+            <button
+              onClick={onCancelReasonModal}
+              style={{
+                marginTop: "15px",
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#d2b48c",
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

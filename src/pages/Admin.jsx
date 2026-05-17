@@ -372,13 +372,34 @@ function Admin({
                   </p>
                   <p
                     style={{
-                      margin: 0,
+                      margin: "0 0 6px 0",
                       color: "#f5d6b3",
                     }}
                   >
                     <strong>Tables:</strong>{" "}
                     {reservation.tablesAllocated ?? 1}
                   </p>
+                  {reservation.advanceAmount && (
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "#d2b48c",
+                      }}
+                    >
+                      <strong>Advance:</strong> ₹{reservation.advanceAmount}
+                    </p>
+                  )}
+                  {reservation.advancePaid !== undefined && (
+                    <p
+                      style={{
+                        margin: 0,
+                        color: reservation.advancePaid ? "#8be28b" : "#ff8f8f",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {reservation.advancePaid ? "Advance Paid ✅" : "Advance Pending ⏳"}
+                    </p>
+                  )}
                 </div>
               ))
             )}

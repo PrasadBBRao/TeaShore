@@ -99,6 +99,12 @@ function App() {
   const [reservationDuration, setReservationDuration] = useState("")
   const [reservationMessage, setReservationMessage] = useState("")
   const [tableAvailabilityMessage, setTableAvailabilityMessage] = useState("")
+  const [showReservationPayment, setShowReservationPayment] = useState(false)
+  const [reservationPaymentMethod, setReservationPaymentMethod] = useState("")
+  const [pendingReservationData, setPendingReservationData] = useState(null)
+  const [showCancelReasonModal, setShowCancelReasonModal] = useState(false)
+  const [selectedCancelReason, setSelectedCancelReason] = useState("")
+  const [pendingCancelReservationId, setPendingCancelReservationId] = useState(null)
 
   // ===== TABLE SESSION STATE =====
   const [currentTableSessionId, setCurrentTableSessionId] = useState(null)
@@ -635,7 +641,11 @@ function App() {
       return
     }
 
-    const newReservation = {
+    // Store pending reservation data and show payment popup
+    const tablesAllocated = peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1
+    const advanceAmount = tablesAllocated * 100
+
+    setPendingReservationData({
       id: "RSV" + Math.floor(1000 + Math.random() * 9000),
       name: reservationName.trim(),
       phone: reservationPhone,
@@ -643,8 +653,19 @@ function App() {
       date: reservationDate,
       time: reservationTime,
       duration: durationHours,
-      tablesAllocated: peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1,
+      tablesAllocated,
+      advanceAmount,
       createdAt: Date.now(),
+    })
+    setShowReservationPayment(true)
+  }
+
+  const handleConfirmReservationPayment = (paymentStatus) => {
+    if (!pendingReservationData) return
+
+    const newReservation = {
+      ...pendingReservationData,
+      advancePaid: paymentStatus === "Paid ✅",
     }
 
     setReservations((prev) => [newReservation, ...prev])
@@ -655,6 +676,9 @@ function App() {
     setReservationDate("")
     setReservationTime("")
     setReservationDuration("")
+    setShowReservationPayment(false)
+    setReservationPaymentMethod("")
+    setPendingReservationData(null)
   }
 
   const handleCancelReservation = (reservationId) => {
@@ -675,10 +699,39 @@ function App() {
       return
     }
 
+    setPendingCancelReservationId(reservationId)
+    setSelectedCancelReason("")
+    setShowCancelReasonModal(true)
+  }
+
+  const handleConfirmCancelReservation = () => {
+    if (!pendingCancelReservationId || !selectedCancelReason) return
+
     setReservations((prev) =>
-      prev.filter((reservation) => reservation.id !== reservationId)
+      prev.filter((reservation) => reservation.id !== pendingCancelReservationId)
     )
     setReservationMessage("Reservation Cancelled Successfully")
+    setShowCancelReasonModal(false)
+    setPendingCancelReservationId(null)
+    setSelectedCancelReason("")
+  }
+
+  const handleModifyReservation = () => {
+    const reservationToModify = reservations.find(
+      (reservation) => reservation.id === pendingCancelReservationId
+    )
+
+    if (!reservationToModify) return
+
+    setReservationName(reservationToModify.name)
+    setReservationPhone(reservationToModify.phone)
+    setReservationPeople(String(reservationToModify.people))
+    setReservationDate(reservationToModify.date)
+    setReservationTime(reservationToModify.time)
+    setReservationDuration(String(reservationToModify.duration))
+    setShowCancelReasonModal(false)
+    setPendingCancelReservationId(null)
+    setSelectedCancelReason("")
   }
 
   const calculateTableAvailability = () => {
@@ -1124,6 +1177,26 @@ function App() {
         onCancelReservation={handleCancelReservation}
         reservationMessage={reservationMessage}
         tableAvailabilityMessage={tableAvailabilityMessage}
+        showReservationPayment={showReservationPayment}
+        reservationPaymentMethod={reservationPaymentMethod}
+        setReservationPaymentMethod={setReservationPaymentMethod}
+        onConfirmReservationPayment={handleConfirmReservationPayment}
+        pendingReservationData={pendingReservationData}
+        onCancelReservationPayment={() => {
+          setShowReservationPayment(false)
+          setReservationPaymentMethod("")
+          setPendingReservationData(null)
+        }}
+        showCancelReasonModal={showCancelReasonModal}
+        selectedCancelReason={selectedCancelReason}
+        setSelectedCancelReason={setSelectedCancelReason}
+        onConfirmCancelReservation={handleConfirmCancelReservation}
+        onModifyReservation={handleModifyReservation}
+        onCancelReasonModal={() => {
+          setShowCancelReasonModal(false)
+          setSelectedCancelReason("")
+          setPendingCancelReservationId(null)
+        }}
       />
 
       {cartItems.length > 0 && !showCheckout && !showOrders && !showAdmin && (
