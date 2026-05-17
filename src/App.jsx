@@ -668,6 +668,7 @@ function App() {
     const newReservation = {
       ...pendingReservationData,
       advancePaid: paymentStatus === "Paid ✅",
+      refundEligible: true,
     }
 
     setReservations((prev) => [newReservation, ...prev])
@@ -690,13 +691,10 @@ function App() {
 
     if (!reservationToCancel) return
 
-    const canCancel = (() => {
-      if (!reservationToCancel.createdAt) return false
-      const elapsedMs = Date.now() - reservationToCancel.createdAt
-      return elapsedMs <= 60 * 60 * 1000
-    })()
+    const elapsedMs = Date.now() - (reservationToCancel.createdAt || 0)
+    const isWithinOneHour = elapsedMs <= 60 * 60 * 1000
 
-    if (!canCancel) {
+    if (!isWithinOneHour) {
       setReservationMessage("Cancellation Time Expired ⛔")
       return
     }
@@ -709,10 +707,25 @@ function App() {
   const handleConfirmCancelReservation = () => {
     if (!pendingCancelReservationId || !selectedCancelReason) return
 
+    const reservationToCancel = reservations.find(
+      (reservation) => reservation.id === pendingCancelReservationId
+    )
+
+    if (!reservationToCancel) return
+
+    const elapsedMs = Date.now() - (reservationToCancel.createdAt || 0)
+    const isWithinOneHour = elapsedMs <= 60 * 60 * 1000
+
     setReservations((prev) =>
       prev.filter((reservation) => reservation.id !== pendingCancelReservationId)
     )
-    setReservationMessage("Reservation Cancelled Successfully")
+
+    if (isWithinOneHour && reservationToCancel.advancePaid) {
+      setReservationMessage("Advance Eligible For Refund ✅")
+    } else {
+      setReservationMessage("Advance Amount Non-Refundable Due To Late Cancellation ⛔")
+    }
+
     setShowCancelReasonModal(false)
     setPendingCancelReservationId(null)
     setSelectedCancelReason("")
@@ -851,6 +864,7 @@ function App() {
               duration: durationHours,
               tablesAllocated: newReservationTables,
               advanceAmount: newReservationTables * 100,
+              refundEligible: reservation.refundEligible,
             }
           : reservation
       )
@@ -1237,6 +1251,7 @@ function App() {
             setCouponMessage={setCouponMessage}
             isCafeQrOrderingMode={isCafeQrOrderingMode}
             detectedTableNumber={detectedTableNumber}
+            customerReservation={isCafeQrOrderingMode ? reservations.find(r => r.phone === phone && r.advancePaid) : null}
             onPayNow={() => {
               if (validateForm()) {
                 if (isCafeQrOrderingMode) {

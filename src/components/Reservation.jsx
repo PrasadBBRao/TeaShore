@@ -492,6 +492,29 @@ function Reservation({
               Why are you cancelling?
             </h2>
 
+            {(() => {
+              const reservation = reservations.find(r => r.id === pendingCancelReservationId)
+              if (!reservation) return null
+              const elapsedMs = Date.now() - (reservation.createdAt || 0)
+              const isWithinOneHour = elapsedMs <= 60 * 60 * 1000
+              return (
+                <p
+                  style={{
+                    marginTop: "15px",
+                    marginBottom: "15px",
+                    color: isWithinOneHour ? "#8be28b" : "#ff8f8f",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    fontSize: "14px",
+                  }}
+                >
+                  {isWithinOneHour
+                    ? "Advance Eligible For Refund ✅"
+                    : "Advance Amount Non-Refundable Due To Late Cancellation ⛔"}
+                </p>
+              )
+            })()}
+
             <div
               onClick={() => setSelectedCancelReason("Change of Plans")}
               style={{

@@ -33,6 +33,7 @@ function Checkout({
   setCouponMessage,
   isCafeQrOrderingMode,
   detectedTableNumber,
+  customerReservation,
   onPayNow,
   showPayment,
   paymentMethod,
@@ -245,6 +246,13 @@ function Checkout({
             <p>₹{totalPrice}</p>
           </div>
 
+          {isCafeQrOrderingMode && customerReservation && (
+            <div style={priceRow}>
+              <p>Reservation Advance</p>
+              <p style={{ color: "#8be28b" }}>-₹{customerReservation.advanceAmount}</p>
+            </div>
+          )}
+
           {!isCafeQrOrderingMode && (
             <div style={priceRow}>
               <p>Delivery Fee</p>
@@ -281,7 +289,7 @@ function Checkout({
             }}
           >
             <p>Final Total</p>
-            <p>₹{isCafeQrOrderingMode ? totalPrice : discountedTotal}</p>
+            <p>₹{isCafeQrOrderingMode ? (customerReservation ? totalPrice - customerReservation.advanceAmount : totalPrice) : discountedTotal}</p>
           </div>
 
           {isCafeQrOrderingMode ? (
