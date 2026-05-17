@@ -37,6 +37,8 @@ function Reservation({
   onConfirmCancelReservation,
   onModifyReservation,
   onCancelReasonModal,
+  isModifyingReservation,
+  onSaveModifiedReservation,
 }) {
   const handleReservationTimeChange = (value) => {
     const isDeleting = value.length < reservationTime.length
@@ -207,7 +209,7 @@ function Reservation({
           style={inputStyle}
         />
 
-        {reservationPeople && (
+        {reservationPeople && !isModifyingReservation && (
           <p
             style={{
               marginTop: "12px",
@@ -222,12 +224,21 @@ function Reservation({
           </p>
         )}
 
-        <button
-          onClick={onBookTable}
-          style={mainButton}
-        >
-          Confirm & Pay Reservation
-        </button>
+        {isModifyingReservation ? (
+          <button
+            onClick={onSaveModifiedReservation}
+            style={mainButton}
+          >
+            Save Modified Reservation
+          </button>
+        ) : (
+          <button
+            onClick={onBookTable}
+            style={mainButton}
+          >
+            Confirm & Pay Reservation
+          </button>
+        )}
 
         {tableAvailabilityMessage && (
           <p

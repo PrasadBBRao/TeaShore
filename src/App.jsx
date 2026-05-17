@@ -105,6 +105,8 @@ function App() {
   const [showCancelReasonModal, setShowCancelReasonModal] = useState(false)
   const [selectedCancelReason, setSelectedCancelReason] = useState("")
   const [pendingCancelReservationId, setPendingCancelReservationId] = useState(null)
+  const [isModifyingReservation, setIsModifyingReservation] = useState(false)
+  const [modifyingReservationId, setModifyingReservationId] = useState(null)
 
   // ===== TABLE SESSION STATE =====
   const [currentTableSessionId, setCurrentTableSessionId] = useState(null)
@@ -729,9 +731,140 @@ function App() {
     setReservationDate(reservationToModify.date)
     setReservationTime(reservationToModify.time)
     setReservationDuration(String(reservationToModify.duration))
+    setIsModifyingReservation(true)
+    setModifyingReservationId(pendingCancelReservationId)
     setShowCancelReasonModal(false)
     setPendingCancelReservationId(null)
     setSelectedCancelReason("")
+  }
+
+  const handleSaveModifiedReservation = () => {
+    const reservationToModify = reservations.find(
+      (reservation) => reservation.id === modifyingReservationId
+    )
+
+    if (!reservationToModify) return
+
+    const peopleCount = Number(reservationPeople)
+    const durationHours = Number(reservationDuration)
+    const openingTimeMinutes = 8 * 60
+    const closingTimeMinutes = 23 * 60
+    const todayDate = getTodayDate()
+    const tomorrowDate = getTomorrowDate()
+
+    if (reservationName.trim().length < 3) {
+      setReservationMessage("Please enter a valid full name")
+      return
+    }
+
+    if (!/^[0-9]{10}$/.test(reservationPhone)) {
+      setReservationMessage("Invalid phone number (must be exactly 10 digits)")
+      return
+    }
+
+    if (!reservationDate || Number.isNaN(durationHours) || durationHours <= 0) {
+      setReservationMessage("Invalid reservation timing")
+      return
+    }
+
+    if (reservationDate !== todayDate && reservationDate !== tomorrowDate) {
+      setReservationMessage("Reservations Allowed Only for Today or Tomorrow ☕")
+      return
+    }
+
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(reservationTime)) {
+      setReservationMessage(
+        "Invalid reservation timing (use 24-hour format, e.g. 14:00)"
+      )
+      return
+    }
+
+    if (reservationDate === todayDate) {
+      const getMinutesFromTime = (timeValue) => {
+        const [hours, minutes] = timeValue.split(":").map(Number)
+        return hours * 60 + minutes
+      }
+
+      const reservationTimeInMinutes = getMinutesFromTime(reservationTime)
+      const currentTimeInMinutes = getCurrentTimeInMinutes()
+
+      if (reservationTimeInMinutes <= currentTimeInMinutes) {
+        setReservationMessage("Reservation time must be in the future ⏰")
+        return
+      }
+    }
+
+    if (Number.isNaN(peopleCount) || peopleCount < 1 || peopleCount > 50) {
+      setReservationMessage("Invalid members count (allowed: 1 to 50)")
+      return
+    }
+
+    const getMinutesFromTime = (timeValue) => {
+      const [hours, minutes] = timeValue.split(":").map(Number)
+      return hours * 60 + minutes
+    }
+
+    const newStart = getMinutesFromTime(reservationTime)
+    const newEnd = newStart + durationHours * 60
+
+    if (newStart < openingTimeMinutes || newEnd > closingTimeMinutes) {
+      setReservationMessage(
+        "Invalid reservation timing (Cafe hours: 8:00 AM to 11:00 PM)"
+      )
+      return
+    }
+
+    const newReservationTables = peopleCount <= 7 ? 1 : Math.ceil((peopleCount - 7) / 6) + 1
+
+    const overlappingReservations = reservations.filter((reservation) => {
+      if (reservation.date !== reservationDate) {
+        return false
+      }
+      if (reservation.id === modifyingReservationId) {
+        return false
+      }
+      const existingStart = getMinutesFromTime(reservation.time)
+      const existingEnd = existingStart + reservation.duration * 60
+      return newStart < existingEnd && newEnd > existingStart
+    })
+
+    const occupiedTables = overlappingReservations.reduce(
+      (total, reservation) => total + (reservation.tablesAllocated ?? 1),
+      0
+    )
+
+    if (occupiedTables + newReservationTables > 8) {
+      setReservationMessage("Reservations Full During This Time ⛔ Please Choose Another Time")
+      return
+    }
+
+    setReservations((prev) =>
+      prev.map((reservation) =>
+        reservation.id === modifyingReservationId
+          ? {
+              ...reservation,
+              name: reservationName.trim(),
+              phone: reservationPhone,
+              people: peopleCount,
+              date: reservationDate,
+              time: reservationTime,
+              duration: durationHours,
+              tablesAllocated: newReservationTables,
+              advanceAmount: newReservationTables * 100,
+            }
+          : reservation
+      )
+    )
+
+    setReservationMessage("Reservation Modified Successfully ☕")
+    setReservationName("")
+    setReservationPhone("")
+    setReservationPeople("")
+    setReservationDate("")
+    setReservationTime("")
+    setReservationDuration("")
+    setIsModifyingReservation(false)
+    setModifyingReservationId(null)
   }
 
   const calculateTableAvailability = () => {
@@ -1159,6 +1292,8 @@ function App() {
         onClose={() => {
           setShowReservations(false)
           setReservationMessage("")
+          setIsModifyingReservation(false)
+          setModifyingReservationId(null)
         }}
         reservationName={reservationName}
         setReservationName={setReservationName}
@@ -1197,6 +1332,8 @@ function App() {
           setSelectedCancelReason("")
           setPendingCancelReservationId(null)
         }}
+        isModifyingReservation={isModifyingReservation}
+        onSaveModifiedReservation={handleSaveModifiedReservation}
       />
 
       {cartItems.length > 0 && !showCheckout && !showOrders && !showAdmin && (
