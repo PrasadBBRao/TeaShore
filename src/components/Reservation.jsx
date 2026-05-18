@@ -404,21 +404,6 @@ function Reservation({
               📱 UPI Payment
             </div>
 
-            <div
-              onClick={() =>
-                setReservationPaymentMethod("COD")
-              }
-              style={{
-                backgroundColor: "#3a261a",
-                padding: "15px",
-                borderRadius: "12px",
-                marginTop: "15px",
-                cursor: "pointer",
-              }}
-            >
-              💵 Pay at Cafe
-            </div>
-
             {reservationPaymentMethod === "UPI" && (
               <div>
                 <img
@@ -443,27 +428,6 @@ function Reservation({
                   style={confirmButton}
                 >
                   Confirm Payment
-                </button>
-              </div>
-            )}
-
-            {reservationPaymentMethod === "COD" && (
-              <div>
-                <p
-                  style={{
-                    marginTop: "20px",
-                  }}
-                >
-                  Pay advance amount at cafe counter 🍽️
-                </p>
-
-                <button
-                  onClick={() =>
-                    onConfirmReservationPayment("Pay at Cafe")
-                  }
-                  style={confirmButton}
-                >
-                  Confirm Reservation
                 </button>
               </div>
             )}
