@@ -1349,6 +1349,7 @@ function App() {
         }}
         isModifyingReservation={isModifyingReservation}
         onSaveModifiedReservation={handleSaveModifiedReservation}
+        pendingCancelReservationId={pendingCancelReservationId}
       />
 
       {cartItems.length > 0 && !showCheckout && !showOrders && !showAdmin && (

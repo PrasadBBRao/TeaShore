@@ -39,6 +39,7 @@ function Reservation({
   onCancelReasonModal,
   isModifyingReservation,
   onSaveModifiedReservation,
+  pendingCancelReservationId,
 }) {
   const handleReservationTimeChange = (value) => {
     const isDeleting = value.length < reservationTime.length
