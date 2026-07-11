@@ -36,7 +36,7 @@ TeaShore is a Full Stack MERN web application developed to provide a smart digit
 ## 🧾 Order Summary
 
 <p align="center">
-<img src="images/Order_Summary.png" width="900">
+<img src="images/Order_Summary.jpeg" width="900">
 </p>
 
 ---
@@ -44,7 +44,7 @@ TeaShore is a Full Stack MERN web application developed to provide a smart digit
 ## 🚚 Order Tracking
 
 <p align="center">
-<img src="images/Order_Tracking.png" width="900">
+<img src="images/Order_Tracking.jpeg" width="900">
 </p>
 
 ---
