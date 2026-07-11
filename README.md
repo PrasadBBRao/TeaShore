@@ -196,7 +196,6 @@ TeaShore
 
 B.E. Information Science & Engineering
 
-Canara Engineering College
 
 GitHub:
 
